@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/spf13/viper"
+	"github.com/yiffyi/bigbrother/config"
 )
 
 const (
@@ -87,13 +87,8 @@ func cgo_open_session(pamh *C.pam_handle_t) C.int {
 	}
 }
 
-func main() {
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath("/etc/bb/")
-	viper.SafeWriteConfig()
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(err)
-	}
+func init() {
+	config.LoadConfig()
 }
+
+func main() {}

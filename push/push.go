@@ -2,17 +2,10 @@ package push
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/spf13/viper"
 	tele "gopkg.in/telebot.v4"
 )
-
-func init() {
-	v := viper.Sub("push.telegram")
-	v.SetDefault("token", "")
-	v.SetDefault("timeout", time.Second*5)
-}
 
 type TelegramBot struct {
 	bot *tele.Bot
