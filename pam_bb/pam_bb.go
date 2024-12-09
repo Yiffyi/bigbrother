@@ -53,7 +53,7 @@ func (h *PAMHandle) pam_get_item_string(itemType C.int) (string, error) {
 	return C.GoString((*C.char)(item)), nil
 }
 
-// export cgo_authenticate
+//export cgo_authenticate
 func cgo_authenticate(pamh *C.pam_handle_t) C.int {
 	var pamUsername *C.char
 	status := C.pam_get_user(pamh, &pamUsername, nil)
