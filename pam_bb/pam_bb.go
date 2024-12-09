@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"unsafe"
+
+	"github.com/spf13/viper"
 )
 
 const (
@@ -82,5 +84,16 @@ func cgo_open_session(pamh *C.pam_handle_t) C.int {
 		return C.PAM_SERVICE_ERR
 	} else {
 		return C.PAM_SUCCESS
+	}
+}
+
+func main() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath("/etc/bb/")
+	viper.SafeWriteConfig()
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(err)
 	}
 }

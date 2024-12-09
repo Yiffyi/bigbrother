@@ -7,7 +7,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags,
                         int argc, const char **argv)
 {
     syslog(LOG_DEBUG, "pam_sm_authenticate");
-    return go_authenticate(pamh);
+    return cgo_authenticate(pamh);
 }
 
 int pam_sm_setcred(pam_handle_t *pamh, int flags,
@@ -30,7 +30,7 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
                         int argc, const char **argv)
 {
     syslog(LOG_DEBUG, "pam_sm_open_session");
-    return PAM_IGNORE;
+    return cgo_open_session(pamh);
 }
 
 int pam_sm_close_session(pam_handle_t *pamh, int flags,
