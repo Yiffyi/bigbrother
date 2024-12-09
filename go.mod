@@ -7,6 +7,7 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
 	golang.org/x/crypto v0.30.0
+	gopkg.in/telebot.v4 v4.0.0-beta.4
 )
 
 require (
