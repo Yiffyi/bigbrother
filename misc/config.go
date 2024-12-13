@@ -1,4 +1,4 @@
-package config
+package misc
 
 import (
 	"time"
@@ -6,20 +6,20 @@ import (
 	"github.com/spf13/viper"
 )
 
-func setupConfig() {
+func setupViper() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 	viper.AddConfigPath("/etc/bb/")
 
+	viper.SetDefault("log.path", "/var/log/bb.log")
+	viper.SetDefault("log.console", true)
 	viper.SetDefault("push.telegram.token", "")
 	viper.SetDefault("push.telegram.timeout", time.Duration(5)*time.Second)
 }
 
-func LoadConfig() {
-	setupConfig()
+func LoadConfig() error {
+	setupViper()
 	viper.SafeWriteConfig()
 	err := viper.ReadInConfig()
-	if err != nil {
-		panic(err)
-	}
+	return err
 }
