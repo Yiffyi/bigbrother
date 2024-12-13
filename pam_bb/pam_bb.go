@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/yiffyi/bigbrother/config"
+	"github.com/yiffyi/bigbrother/misc"
 )
 
 const (
@@ -23,6 +23,9 @@ const (
 	PAM_AUTHTOK     = C.PAM_AUTHTOK
 	// ...
 )
+
+var _loadConfigError error = nil
+var _setupLogError error = nil
 
 type PAMHandle struct {
 	pamh   *C.pam_handle_t
@@ -63,6 +66,14 @@ func bb_cgo_authenticate(pamh *C.pam_handle_t) C.int {
 		status: C.PAM_SUCCESS,
 	})
 
+	if _loadConfigError != nil {
+		C.bb_c_conv(pamh, C.PAM_ERROR_MSG, C.CString(fmt.Sprintf("BigBrother: [ERROR] could not load config, err=%s", _loadConfigError.Error())))
+	}
+
+	if _setupLogError != nil {
+		C.bb_c_conv(pamh, C.PAM_ERROR_MSG, C.CString(fmt.Sprintf("BigBrother: [ERROR] could not setup log, err=%s", _setupLogError.Error())))
+	}
+
 	if status != C.PAM_SUCCESS {
 		return C.PAM_SERVICE_ERR
 	} else {
@@ -88,7 +99,9 @@ func bb_cgo_open_session(pamh *C.pam_handle_t) C.int {
 }
 
 func init() {
-	config.LoadConfig()
+	_loadConfigError = misc.LoadConfig()
+	_setupLogError = misc.SetupLog()
 }
 
+// main is not called
 func main() {}
