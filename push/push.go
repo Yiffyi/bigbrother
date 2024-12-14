@@ -1,31 +1,19 @@
 package push
 
 import (
-	"net/http"
-
-	"github.com/spf13/viper"
-	tele "gopkg.in/telebot.v4"
+	"errors"
+	"time"
 )
 
-type TelegramBot struct {
-	bot *tele.Bot
+type PushChannel interface {
+	NotifyNewSSHLogin(rhost, user string, t time.Time) error
 }
 
-func NewTelegramBot() (*TelegramBot, error) {
-	v := viper.Sub("push.telegram")
-
-	bot, err := tele.NewBot(tele.Settings{
-		Token: v.GetString("token"),
-		Client: &http.Client{
-			Timeout: v.GetDuration("timeout"),
-		},
-	})
-
-	if err != nil {
-		return nil, err
+func GetPushChannel(name string) (PushChannel, error) {
+	switch name {
+	case "telegram":
+		return NewTelegramBot()
+	default:
+		return nil, errors.New("unsupported push channel")
 	}
-
-	return &TelegramBot{
-		bot: bot,
-	}, nil
 }
