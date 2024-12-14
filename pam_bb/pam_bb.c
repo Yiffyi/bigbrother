@@ -51,8 +51,8 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 int bb_c_conv(const pam_handle_t *pamh, int msg_style, const char* msg)
 {
-    struct pam_conv *conv;
-    int status = pam_get_item(pamh, PAM_CONV, &conv);
+    const struct pam_conv *conv;
+    int status = pam_get_item(pamh, PAM_CONV, (const void**)&conv);
     if (status != PAM_SUCCESS) return status;
 
     const struct pam_message pmsg = {

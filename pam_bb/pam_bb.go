@@ -8,9 +8,13 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"time"
 	"unsafe"
 
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"github.com/yiffyi/bigbrother/misc"
+	"github.com/yiffyi/bigbrother/push"
 )
 
 const (
@@ -26,6 +30,7 @@ const (
 
 var _loadConfigError error = nil
 var _setupLogError error = nil
+var _primaryPushChannel push.PushChannel = nil
 
 type PAMHandle struct {
 	pamh   *C.pam_handle_t
@@ -61,10 +66,11 @@ func bb_cgo_authenticate(pamh *C.pam_handle_t) C.int {
 	var pamUsername *C.char
 	status := C.pam_get_user(pamh, &pamUsername, nil)
 
-	dumpPAMItems(&PAMHandle{
+	h := &PAMHandle{
 		pamh:   pamh,
 		status: C.PAM_SUCCESS,
-	})
+	}
+	_pamDebugDump(h)
 
 	if _loadConfigError != nil {
 		C.bb_c_conv(pamh, C.PAM_ERROR_MSG, C.CString(fmt.Sprintf("BigBrother: [ERROR] could not load config, err=%s", _loadConfigError.Error())))
@@ -75,10 +81,36 @@ func bb_cgo_authenticate(pamh *C.pam_handle_t) C.int {
 	}
 
 	if status != C.PAM_SUCCESS {
+		log.Error().
+			Str("status", h.pam_strerror()).
+			Msg("pam_get_user returned error")
+
 		return C.PAM_SERVICE_ERR
-	} else {
-		return C.PAM_SUCCESS
 	}
+
+	rhost, err := h.pam_get_item_string(PAM_RHOST)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("item", "PAM_RHOST").
+			Msg("cannot get details returned error")
+
+		return C.PAM_SERVICE_ERR
+	}
+
+	ruser, err := h.pam_get_item_string(PAM_RUSER)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("item", "PAM_RUSER").
+			Msg("cannot get details returned error")
+
+		return C.PAM_SERVICE_ERR
+	}
+
+	_primaryPushChannel.NotifyNewSSHLogin(ruser, rhost, C.GoString(pamUsername), time.Now())
+
+	return C.PAM_SUCCESS
 }
 
 //export bb_cgo_open_session
@@ -86,7 +118,7 @@ func bb_cgo_open_session(pamh *C.pam_handle_t) C.int {
 	var pamUsername *C.char
 	status := C.pam_get_user(pamh, &pamUsername, nil)
 
-	dumpPAMItems(&PAMHandle{
+	_pamDebugDump(&PAMHandle{
 		pamh:   pamh,
 		status: C.PAM_SUCCESS,
 	})
@@ -101,6 +133,10 @@ func bb_cgo_open_session(pamh *C.pam_handle_t) C.int {
 func init() {
 	_loadConfigError = misc.LoadConfig()
 	_setupLogError = misc.SetupLog()
+
+	if _loadConfigError == nil {
+		_primaryPushChannel, _ = push.GetPushChannel(viper.GetString("push.channel"))
+	}
 }
 
 // main is not called

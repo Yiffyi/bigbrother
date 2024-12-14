@@ -2,39 +2,20 @@ package main
 
 import (
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
 
-func dumpPAMItems(h *PAMHandle) {
-	serviceName, err := h.pam_get_item_string(PAM_SERVICE)
-	if err != nil {
-		panic(err)
+func _pamDebugDump(h *PAMHandle) {
+	if !viper.GetBool("log.pam_debug_dump") {
+		return
 	}
 
-	user, err := h.pam_get_item_string(PAM_USER)
-
-	if err != nil {
-		panic(err)
-	}
-
-	tty, err := h.pam_get_item_string(PAM_TTY)
-	if err != nil {
-		panic(err)
-	}
-
-	ruser, err := h.pam_get_item_string(PAM_RUSER)
-	if err != nil {
-		panic(err)
-	}
-
-	rhost, err := h.pam_get_item_string(PAM_RHOST)
-	if err != nil {
-		panic(err)
-	}
-
-	token, err := h.pam_get_item_string(PAM_AUTHTOK)
-	if err != nil {
-		panic(err)
-	}
+	serviceName, _ := h.pam_get_item_string(PAM_SERVICE)
+	user, _ := h.pam_get_item_string(PAM_USER)
+	tty, _ := h.pam_get_item_string(PAM_TTY)
+	ruser, _ := h.pam_get_item_string(PAM_RUSER)
+	rhost, _ := h.pam_get_item_string(PAM_RHOST)
+	token, _ := h.pam_get_item_string(PAM_AUTHTOK)
 
 	log.Info().
 		Str("service", serviceName).
