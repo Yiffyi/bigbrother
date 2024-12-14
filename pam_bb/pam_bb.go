@@ -8,7 +8,6 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"time"
 	"unsafe"
 
 	"github.com/rs/zerolog/log"
@@ -61,16 +60,7 @@ func (h *PAMHandle) pam_get_item_string(itemType C.int) (string, error) {
 	return C.GoString((*C.char)(item)), nil
 }
 
-//export bb_cgo_authenticate
-func bb_cgo_authenticate(pamh *C.pam_handle_t) C.int {
-	var pamUsername *C.char
-	status := C.pam_get_user(pamh, &pamUsername, nil)
-
-	h := &PAMHandle{
-		pamh:   pamh,
-		status: C.PAM_SUCCESS,
-	}
-	_pamDebugDump(h)
+func _printImportantError(pamh *C.pam_handle_t) {
 
 	if _loadConfigError != nil {
 		C.bb_c_conv(pamh, C.PAM_ERROR_MSG, C.CString(fmt.Sprintf("BigBrother: [ERROR] could not load config, err=%s", _loadConfigError.Error())))
@@ -80,6 +70,21 @@ func bb_cgo_authenticate(pamh *C.pam_handle_t) C.int {
 		C.bb_c_conv(pamh, C.PAM_ERROR_MSG, C.CString(fmt.Sprintf("BigBrother: [ERROR] could not setup log, err=%s", _setupLogError.Error())))
 	}
 
+}
+
+//export bb_cgo_authenticate
+func bb_cgo_authenticate(pamh *C.pam_handle_t) C.int {
+	var pamUsername *C.char
+	status := C.pam_get_user(pamh, &pamUsername, nil)
+
+	h := &PAMHandle{
+		pamh:   pamh,
+		status: C.PAM_SUCCESS,
+	}
+
+	items := _pamDebugDump("bb_cgo_authenticate", h)
+	_printImportantError(pamh)
+
 	if status != C.PAM_SUCCESS {
 		log.Error().
 			Str("status", h.pam_strerror()).
@@ -88,27 +93,7 @@ func bb_cgo_authenticate(pamh *C.pam_handle_t) C.int {
 		return C.PAM_SERVICE_ERR
 	}
 
-	rhost, err := h.pam_get_item_string(PAM_RHOST)
-	if err != nil {
-		log.Error().
-			Err(err).
-			Str("item", "PAM_RHOST").
-			Msg("cannot get details returned error")
-
-		return C.PAM_SERVICE_ERR
-	}
-
-	ruser, err := h.pam_get_item_string(PAM_RUSER)
-	if err != nil {
-		log.Error().
-			Err(err).
-			Str("item", "PAM_RUSER").
-			Msg("cannot get details returned error")
-
-		return C.PAM_SERVICE_ERR
-	}
-
-	_primaryPushChannel.NotifyNewSSHLogin(ruser, rhost, C.GoString(pamUsername), time.Now())
+	_primaryPushChannel.NotifyPAMAuthenticate(items)
 
 	return C.PAM_SUCCESS
 }
@@ -118,16 +103,25 @@ func bb_cgo_open_session(pamh *C.pam_handle_t) C.int {
 	var pamUsername *C.char
 	status := C.pam_get_user(pamh, &pamUsername, nil)
 
-	_pamDebugDump(&PAMHandle{
+	h := &PAMHandle{
 		pamh:   pamh,
 		status: C.PAM_SUCCESS,
-	})
+	}
+
+	items := _pamDebugDump("bb_cgo_open_session", h)
+	_printImportantError(pamh)
 
 	if status != C.PAM_SUCCESS {
+		log.Error().
+			Str("status", h.pam_strerror()).
+			Msg("pam_get_user returned error")
+
 		return C.PAM_SERVICE_ERR
-	} else {
-		return C.PAM_SUCCESS
 	}
+
+	_primaryPushChannel.NotifyPAMOpenSession(items)
+
+	return C.PAM_SUCCESS
 }
 
 func init() {

@@ -75,3 +75,29 @@ At <code>%s</code>, a new SSH connection to managed machine has established:
 	}
 	return err
 }
+
+func (b *TelegramBot) NotifyPAMAuthenticate(items map[string]string) error {
+	if v, ok := items["service"]; ok && v == "sshd" {
+		return b.NotifyNewSSHLogin(items["ruser"], items["rhost"], items["user"], time.Now())
+	} else {
+		err := errors.New("unsupported caller service from PAM")
+		log.Info().
+			Str("service", v).
+			Err(err).
+			Msg("new PAM session opened")
+		return err
+	}
+}
+
+func (b *TelegramBot) NotifyPAMOpenSession(items map[string]string) error {
+	if v, ok := items["service"]; ok && v == "sshd" {
+		return b.NotifyNewSSHLogin(items["ruser"], items["rhost"], items["user"], time.Now())
+	} else {
+		err := errors.New("unsupported caller service from PAM")
+		log.Info().
+			Str("service", v).
+			Err(err).
+			Msg("new PAM session opened")
+		return err
+	}
+}
