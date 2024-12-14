@@ -67,7 +67,7 @@ func (b *TelegramBot) NotifyNewSSHLogin(ruser, rhost, user string, t time.Time) 
 At <code>%s</code>, a new SSH connection to managed machine has established:
 <code>%s@%s</code> --> <code>%s@%s</code>`
 
-	msg := fmt.Sprintf(msg_format, html.EscapeString(t.Format(time.RFC1123)), html.EscapeString(ruser), html.EscapeString(rhost), html.EscapeString(hostname), html.EscapeString(user))
+	msg := fmt.Sprintf(msg_format, html.EscapeString(t.Format(time.RFC1123)), html.EscapeString(ruser), html.EscapeString(rhost), html.EscapeString(user), html.EscapeString(hostname))
 
 	_, err = b.bot.Send(c, msg, tele.ModeHTML)
 	if err != nil {
