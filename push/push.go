@@ -6,7 +6,7 @@ import (
 )
 
 type PushChannel interface {
-	NotifyNewSSHLogin(rhost, user string, t time.Time) error
+	NotifyNewSSHLogin(ruser, rhost, user string, t time.Time) error
 }
 
 func GetPushChannel(name string) (PushChannel, error) {

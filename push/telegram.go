@@ -1,10 +1,14 @@
 package push
 
 import (
+	"errors"
 	"fmt"
+	"html"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	tele "gopkg.in/telebot.v4"
 )
@@ -32,7 +36,7 @@ func NewTelegramBot() (*TelegramBot, error) {
 	}, nil
 }
 
-func (b *TelegramBot) NotifyNewSSHLogin(rhost, user string, t time.Time) error {
+func (b *TelegramBot) NotifyNewSSHLogin(ruser, rhost, user string, t time.Time) error {
 	v := viper.Sub("push.telegram")
 
 	chatid := v.GetInt64("to_chatid")
@@ -42,22 +46,32 @@ func (b *TelegramBot) NotifyNewSSHLogin(rhost, user string, t time.Time) error {
 	var err error
 	if chatid != 0 {
 		c, err = b.bot.ChatByID(chatid)
-		if err != nil {
-			return err
-		}
-	} else if len(username) == 0 {
+	} else if len(username) > 0 {
 		c, err = b.bot.ChatByUsername(username)
-		if err != nil {
-			return err
-		}
+	} else {
+		err = errors.New("could not found valid telegram config")
 	}
 
-	msg := fmt.Sprintf(`# New SSH Login
-			HOST: %s
-			RHOST: %s
-			USER: %s
-			T: %s`, "...", rhost, user, t.Format(time.RFC1123))
+	if err != nil {
+		log.Error().Err(err).Str("username", username).Int64("chatid", chatid).Msg("could not get chat recipient")
+		return err
+	}
 
-	_, err = b.bot.Send(c, msg, tele.ModeMarkdownV2)
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "UNKNOWN"
+		log.Error().Err(err).Msg("could not get hostname")
+	}
+
+	msg_format := `<b>New SSH Login.</b>
+At <code>%s</code>, a new SSH connection to managed machine has established:
+<code>%s@%s</code> --> <code>%s@%s</code>`
+
+	msg := fmt.Sprintf(msg_format, html.EscapeString(t.Format(time.RFC1123)), html.EscapeString(ruser), html.EscapeString(rhost), html.EscapeString(hostname), html.EscapeString(user))
+
+	_, err = b.bot.Send(c, msg, tele.ModeHTML)
+	if err != nil {
+		log.Error().Err(err).Str("username", username).Int64("chatid", chatid).Msg("bot.Send returned error")
+	}
 	return err
 }
