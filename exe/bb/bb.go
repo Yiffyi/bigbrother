@@ -1,12 +1,24 @@
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+	"github.com/yiffyi/bigbrother/cmd"
+	"github.com/yiffyi/bigbrother/misc"
+)
 
 func main() {
+	if err := misc.LoadConfig(); err != nil {
+		panic(err)
+	}
+
+	misc.SetupLog()
+
 	var rootCmd = &cobra.Command{
 		Use:   "bb",
 		Short: "bb - Big Brother is WATCHING you(r server)",
 	}
+
+	rootCmd.AddCommand(cmd.SetupInstallCmd())
 
 	rootCmd.Execute()
 }
