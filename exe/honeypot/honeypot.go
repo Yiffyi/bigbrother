@@ -30,7 +30,7 @@ func main() {
 		config.AddHostKey(v)
 	}
 
-	for _, addr := range viper.GetStringSlice("listen_addrs") {
+	for _, addr := range v.GetStringSlice("listenAddrs") {
 		go sshConnHandler(addr, config)
 	}
 
@@ -167,7 +167,7 @@ func servePerChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Reque
 
 func NewSSHServerConfig(v *viper.Viper) *ssh.ServerConfig {
 	return &ssh.ServerConfig{
-		ServerVersion: v.GetString("server_version"),
+		ServerVersion: v.GetString("serverVersion"),
 		//Define a function to run when a client attempts a password login
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
 			sid := xxhash.Sum64(c.SessionID())
@@ -177,7 +177,7 @@ func NewSSHServerConfig(v *viper.Viper) *ssh.ServerConfig {
 				Str("user", c.User()).
 				Str("password", string(pass)).
 				Msg("password auth attempt")
-			if viper.GetBool("AllowAnyCred") {
+			if v.GetBool("allowAnyCred") {
 				return nil, nil
 			} else {
 				return nil, fmt.Errorf("password rejected for %q", c.User())
@@ -187,7 +187,7 @@ func NewSSHServerConfig(v *viper.Viper) *ssh.ServerConfig {
 }
 
 func LoadHostKey(v *viper.Viper) []ssh.Signer {
-	paths := v.GetStringSlice("server_host_keys")
+	paths := v.GetStringSlice("serverHostKeys")
 	if len(paths) == 0 {
 		panic("no host keys found")
 	}
