@@ -5,73 +5,46 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path/filepath"
-	"strconv"
+	"os/signal"
 
 	"github.com/cespare/xxhash"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
+	"github.com/yiffyi/bigbrother/misc"
 	"golang.org/x/crypto/ssh"
 )
 
-func setupLogger() {
-	toConsole := viper.GetBool("LogToConsole")
-	toFile := viper.GetString("LogToFile")
-
-	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
-		return filepath.Base(file) + ":" + strconv.Itoa(line)
-	}
-
-	if len(toFile) > 0 {
-		logFile, err := os.OpenFile(
-			toFile,
-			os.O_APPEND|os.O_CREATE|os.O_WRONLY,
-			0664,
-		)
-		if err != nil {
-			panic(err)
-		}
-
-		if toConsole {
-			// Multi-writer setup
-			multi := zerolog.MultiLevelWriter(os.Stdout, logFile)
-			log.Logger = zerolog.New(multi).With().Timestamp().Caller().Logger()
-		} else {
-			log.Logger = zerolog.New(logFile).With().Timestamp().Caller().Logger()
-		}
-	}
-	// default is fine
-}
-
 func main() {
-	viper.SetDefault("ServerVersion", "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3")
-	viper.SetDefault("ServerHostKeys", []string{"id_rsa"})
-	viper.SetDefault("ServerListenAddr", "0.0.0.0:2022")
-	viper.SetDefault("AllowAnyCred", false)
-	viper.SetDefault("LogToConsole", true)
-	viper.SetDefault("LogToFile", "honeypot.log")
-
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath(".")
-	viper.SafeWriteConfig()
-
-	err := viper.ReadInConfig() // Find and read the config file
-	if err != nil {             // Handle errors reading the config file
+	err := misc.LoadConfig()
+	if err != nil { // Handle errors reading the config file
 		panic(fmt.Errorf("fatal error config file: %w", err))
 	}
+	misc.SetupLog()
 
-	setupLogger()
+	v := viper.Sub("honeypot")
 
-	config := NewSSHServerConfig()
-	hostKeys := LoadHostKey()
+	config := NewSSHServerConfig(v)
+	hostKeys := LoadHostKey(v)
 
 	for _, v := range hostKeys {
 		config.AddHostKey(v)
 	}
 
-	listenAddr := viper.GetString("ServerListenAddr")
+	for _, addr := range viper.GetStringSlice("listen_addrs") {
+		go sshConnHandler(addr, config)
+	}
+
+	// Setup a channel to receive a signal
+	done := make(chan os.Signal, 1)
+
+	// Notify this channel when a SIGINT is received
+	signal.Notify(done, os.Interrupt)
+
+	<-done
+	log.Warn().Msg("shutting down")
+}
+
+func sshConnHandler(listenAddr string, serverConfig *ssh.ServerConfig) {
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		panic(err)
@@ -89,11 +62,12 @@ func main() {
 		}
 
 		// Before use, a handshake must be performed on the incoming net.Conn.
-		sshConn, chans, reqs, err := ssh.NewServerConn(tcpConn, config)
+		sshConn, chans, reqs, err := ssh.NewServerConn(tcpConn, serverConfig)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to handshake")
 			continue
 		}
+
 		sid := xxhash.Sum64(sshConn.SessionID())
 		log.Info().
 			Uint64("session_id", sid).
@@ -191,9 +165,9 @@ func servePerChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Reque
 	}
 }
 
-func NewSSHServerConfig() *ssh.ServerConfig {
+func NewSSHServerConfig(v *viper.Viper) *ssh.ServerConfig {
 	return &ssh.ServerConfig{
-		ServerVersion: viper.GetString("ServerVersion"),
+		ServerVersion: v.GetString("server_version"),
 		//Define a function to run when a client attempts a password login
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
 			sid := xxhash.Sum64(c.SessionID())
@@ -212,8 +186,8 @@ func NewSSHServerConfig() *ssh.ServerConfig {
 	}
 }
 
-func LoadHostKey() []ssh.Signer {
-	paths := viper.GetStringSlice("ServerHostKeys")
+func LoadHostKey(v *viper.Viper) []ssh.Signer {
+	paths := v.GetStringSlice("server_host_keys")
 	if len(paths) == 0 {
 		panic("no host keys found")
 	}

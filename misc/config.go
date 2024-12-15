@@ -14,11 +14,18 @@ func setupViper() {
 	viper.SetDefault("log.path", "/var/log/bb.log")
 	viper.SetDefault("log.console", true)
 	viper.SetDefault("log.pam_debug_dump", false)
+
 	viper.SetDefault("push.channel", "telegram")
 	viper.SetDefault("push.telegram.token", "")
 	viper.SetDefault("push.telegram.to_username", "")
 	viper.SetDefault("push.telegram.to_chatid", 0)
 	viper.SetDefault("push.telegram.timeout", time.Duration(5)*time.Second)
+
+	viper.SetDefault("honeypot.enabled", false)
+	viper.SetDefault("honeypot.server_version", "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3")
+	viper.SetDefault("honeypot.server_host_keys", []string{"id_rsa"})
+	viper.SetDefault("honeypot.listen_addrs", []string{"0.0.0.0:2022"})
+	viper.SetDefault("honeypot.allow_any_creds", false)
 }
 
 func LoadConfig() error {
