@@ -27,9 +27,9 @@ func setupViper() {
 	viper.SetDefault("honeypot.listen_addrs", []string{"0.0.0.0:2022"})
 	viper.SetDefault("honeypot.allow_any_creds", false)
 
-	viper.SetDefault("installer.honeypot_exe", "/usr/local/bin/honeypot")
+	viper.SetDefault("installer.honeypot_path", "/usr/local/bin/honeypot")
 	viper.SetDefault("installer.honeypot_service_unit", "/etc/systemd/system/bb-honeypot.service")
-	viper.SetDefault("installer.pam_bb_exe", "/usr/local/lib/pam_bb.so")
+	viper.SetDefault("installer.pam_bb_path", "/usr/local/lib/pam_bb.so")
 }
 
 func LoadConfig() error {

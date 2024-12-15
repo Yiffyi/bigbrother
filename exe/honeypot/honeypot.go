@@ -177,7 +177,7 @@ func NewSSHServerConfig(v *viper.Viper) *ssh.ServerConfig {
 				Str("user", c.User()).
 				Str("password", string(pass)).
 				Msg("password auth attempt")
-			if viper.GetBool("AllowAnyCred") {
+			if v.GetBool("allow_any_creds") {
 				return nil, nil
 			} else {
 				return nil, fmt.Errorf("password rejected for %q", c.User())

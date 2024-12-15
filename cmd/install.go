@@ -43,7 +43,7 @@ func installPAM() {
 		}
 	}
 
-	dstPath := viper.GetString("installer.pamPath")
+	dstPath := viper.GetString("installer.pam_bb_path")
 	err := os.Link("./pam_bb.so", dstPath)
 	if err != nil {
 		src, err := os.OpenFile("./pam_bb.so", os.O_RDONLY, 0)
