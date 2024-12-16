@@ -17,6 +17,7 @@ import (
 var installPAMToServiceFlag string
 var installPAMCustomSOFlag string
 var installZstdBytes []byte
+var installSaveConfig bool
 
 var installCmd = &cobra.Command{
 	Use:   "install",
@@ -30,12 +31,17 @@ var installCmd = &cobra.Command{
 		if slices.Contains(args, "honeypot") {
 			installHoneypot()
 		}
+
+		if installSaveConfig {
+			viper.SafeWriteConfig()
+		}
 	},
 }
 
 func SetupInstallCmd(installZstd []byte) *cobra.Command {
 	installCmd.Flags().StringVar(&installPAMToServiceFlag, "pamService", "", "Service to add pam_bb")
 	installCmd.Flags().StringVar(&installPAMCustomSOFlag, "pamSo", "", "Use a differeent pam_bb.so file instead of the embedded one")
+	installCmd.Flags().BoolVar(&installSaveConfig, "saveConfig", false, "Save current config to /etc/bb/config.toml")
 
 	installZstdBytes = installZstd
 	return installCmd

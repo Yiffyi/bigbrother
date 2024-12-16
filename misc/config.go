@@ -10,6 +10,8 @@ func setupViper() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 	viper.AddConfigPath("/etc/bb/")
+	// secondary config location
+	viper.AddConfigPath(".")
 
 	viper.SetDefault("log.path", "/var/log/bb.log")
 	viper.SetDefault("log.console", true)
@@ -34,6 +36,7 @@ func setupViper() {
 
 func LoadConfig() error {
 	setupViper()
+
 	viper.SafeWriteConfig()
 	err := viper.ReadInConfig()
 	return err
