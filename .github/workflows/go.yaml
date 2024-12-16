@@ -17,7 +17,7 @@ jobs:
       - name: Display Go version
         run: go version
       - name: Install dependencies
-        run: go mod download && apt-get install -y libpam0g-dev
+        run: go mod download && sudo apt-get update && sudo apt-get install -y libpam0g-dev
       - name: Build
         run: ./build.sh
       - name: Upload Main Executable
