@@ -78,7 +78,9 @@ func bb_cgo_authenticate(pamh *C.pam_handle_t) (status C.int) {
 		if r := recover(); r != nil {
 			log.Error().
 				Str("r", fmt.Sprintf("%v", r)).
-				Msg("bb_cgo_open_session: panic happened")
+				Msg("bb_cgo_authenticate: panic happened")
+
+			C.bb_c_conv(pamh, C.PAM_ERROR_MSG, C.CString(fmt.Sprintf("BigBrother: [ERROR] bb_cgo_authenticate: panic happened, r=%v", r)))
 			status = C.PAM_SERVICE_ERR
 		}
 	}()
@@ -114,6 +116,7 @@ func bb_cgo_open_session(pamh *C.pam_handle_t) (status C.int) {
 			log.Error().
 				Str("r", fmt.Sprintf("%v", r)).
 				Msg("bb_cgo_open_session: panic happened")
+			C.bb_c_conv(pamh, C.PAM_ERROR_MSG, C.CString(fmt.Sprintf("BigBrother: [ERROR] bb_cgo_open_session: panic happened, r=%v", r)))
 			status = C.PAM_SERVICE_ERR
 		}
 	}()
@@ -144,7 +147,7 @@ func bb_cgo_open_session(pamh *C.pam_handle_t) (status C.int) {
 }
 
 func init() {
-	_loadConfigError = misc.LoadConfig()
+	_loadConfigError = misc.LoadConfig([]string{"/etc/bb"})
 	_setupLogError = misc.SetupLog()
 
 	if _loadConfigError == nil {
