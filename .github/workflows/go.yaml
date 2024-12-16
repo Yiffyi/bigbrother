@@ -1,0 +1,32 @@
+name: Go
+
+on: [push]
+
+jobs:
+  build:
+    # runs on a older version of Ubuntu, so that we get
+    # a GLIBC version that has better compatibility
+    runs-on: ubuntu-20.04 
+
+    steps:
+      - uses: actions/checkout@v4
+      # - name: Setup Go ${{ matrix.go-version }}
+      #   uses: actions/setup-go@v5
+      #   with:
+      #     go-version: ${{ matrix.go-version }}
+      - name: Display Go version
+        run: go version
+      - name: Install dependencies
+        run: go mod download
+      - name: Build
+        run: ./build.sh
+      - name: Upload Main Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: bb
+          path: ./bin/bb
+      - name: Upload the bin Folder for debugging
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin
+          path: ./bin
