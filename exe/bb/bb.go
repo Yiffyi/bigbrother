@@ -12,7 +12,7 @@ import (
 var installZstdBytes []byte
 
 func main() {
-	if err := misc.LoadConfig([]string{"/etc/bb", "."}); err != nil {
+	if err := misc.LoadConfig([]string{"."}); err != nil {
 		panic(err)
 	}
 

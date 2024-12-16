@@ -147,7 +147,7 @@ func bb_cgo_open_session(pamh *C.pam_handle_t) (status C.int) {
 }
 
 func init() {
-	_loadConfigError = misc.LoadConfig([]string{"/etc/bb"})
+	_loadConfigError = misc.LoadConfig(nil)
 	_setupLogError = misc.SetupLog()
 
 	if _loadConfigError == nil {

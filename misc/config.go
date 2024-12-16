@@ -1,25 +1,17 @@
 package misc
 
 import (
+	"os"
 	"time"
 
 	"github.com/spf13/viper"
 )
 
-var DefaultConfigSearchPaths = []string{
-	"/etc/bb/",
-	// secondary config location
-	// ".",
-}
-
 func setupViper(searchPaths []string) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 
-	if searchPaths == nil {
-		searchPaths = DefaultConfigSearchPaths
-	}
-
+	viper.AddConfigPath("/etc/bb")
 	for _, path := range searchPaths {
 		viper.AddConfigPath(path)
 	}
@@ -45,9 +37,12 @@ func setupViper(searchPaths []string) {
 	viper.SetDefault("installer.pam_bb_path", "/usr/local/lib/pam_bb.so")
 }
 
-func LoadConfig(searchPaths []string) error {
-	setupViper(searchPaths)
+func LoadConfig(extraSearchPaths []string) error {
+	setupViper(extraSearchPaths)
 
+	if _, err := os.Stat("/etc/bb"); os.IsNotExist(err) {
+		os.Mkdir("/etc/bb", 0755)
+	}
 	viper.SafeWriteConfig()
 	err := viper.ReadInConfig()
 	return err
