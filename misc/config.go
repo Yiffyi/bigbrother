@@ -11,10 +11,10 @@ func setupViper(searchPaths []string) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 
-	viper.AddConfigPath("/etc/bb")
 	for _, path := range searchPaths {
 		viper.AddConfigPath(path)
 	}
+	viper.AddConfigPath("/etc/bb")
 
 	viper.SetDefault("log.path", "/var/log/bb.log")
 	viper.SetDefault("log.console", true)
