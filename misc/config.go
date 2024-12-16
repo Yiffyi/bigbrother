@@ -6,12 +6,23 @@ import (
 	"github.com/spf13/viper"
 )
 
-func setupViper() {
+var DefaultConfigSearchPaths = []string{
+	"/etc/bb/",
+	// secondary config location
+	// ".",
+}
+
+func setupViper(searchPaths []string) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
-	viper.AddConfigPath("/etc/bb/")
-	// secondary config location
-	viper.AddConfigPath(".")
+
+	if searchPaths == nil {
+		searchPaths = DefaultConfigSearchPaths
+	}
+
+	for _, path := range searchPaths {
+		viper.AddConfigPath(path)
+	}
 
 	viper.SetDefault("log.path", "/var/log/bb.log")
 	viper.SetDefault("log.console", true)
@@ -34,8 +45,8 @@ func setupViper() {
 	viper.SetDefault("installer.pam_bb_path", "/usr/local/lib/pam_bb.so")
 }
 
-func LoadConfig() error {
-	setupViper()
+func LoadConfig(searchPaths []string) error {
+	setupViper(searchPaths)
 
 	viper.SafeWriteConfig()
 	err := viper.ReadInConfig()
