@@ -33,7 +33,7 @@ var installCmd = &cobra.Command{
 		}
 
 		if installSaveConfig {
-			viper.SafeWriteConfig()
+			viper.SafeWriteConfigAs(misc.GlobalConfigFullPath)
 		}
 	},
 }

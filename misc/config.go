@@ -2,19 +2,26 @@ package misc
 
 import (
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/viper"
 )
 
+const GlobalConfigPath = "/etc/bb"
+const DefaultConfigName = "config"
+const DefaultConfigType = "toml"
+
+var GlobalConfigFullPath = filepath.Join(GlobalConfigPath, DefaultConfigName+"."+DefaultConfigType)
+
 func setupViper(searchPaths []string) {
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
+	viper.SetConfigName(DefaultConfigName)
+	viper.SetConfigType(DefaultConfigType)
 
 	for _, path := range searchPaths {
 		viper.AddConfigPath(path)
 	}
-	viper.AddConfigPath("/etc/bb")
+	viper.AddConfigPath(GlobalConfigPath)
 
 	viper.SetDefault("log.path", "/var/log/bb.log")
 	viper.SetDefault("log.console", true)
