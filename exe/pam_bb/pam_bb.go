@@ -73,9 +73,18 @@ func _printImportantError(pamh *C.pam_handle_t) {
 }
 
 //export bb_cgo_authenticate
-func bb_cgo_authenticate(pamh *C.pam_handle_t) C.int {
+func bb_cgo_authenticate(pamh *C.pam_handle_t) (status C.int) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error().
+				Str("r", fmt.Sprintf("%v", r)).
+				Msg("bb_cgo_open_session: panic happened")
+			status = C.PAM_SERVICE_ERR
+		}
+	}()
+
 	var pamUsername *C.char
-	status := C.pam_get_user(pamh, &pamUsername, nil)
+	status = C.pam_get_user(pamh, &pamUsername, nil)
 
 	h := &PAMHandle{
 		pamh:   pamh,
@@ -99,9 +108,18 @@ func bb_cgo_authenticate(pamh *C.pam_handle_t) C.int {
 }
 
 //export bb_cgo_open_session
-func bb_cgo_open_session(pamh *C.pam_handle_t) C.int {
+func bb_cgo_open_session(pamh *C.pam_handle_t) (status C.int) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error().
+				Str("r", fmt.Sprintf("%v", r)).
+				Msg("bb_cgo_open_session: panic happened")
+			status = C.PAM_SERVICE_ERR
+		}
+	}()
+
 	var pamUsername *C.char
-	status := C.pam_get_user(pamh, &pamUsername, nil)
+	status = C.pam_get_user(pamh, &pamUsername, nil)
 
 	h := &PAMHandle{
 		pamh:   pamh,
@@ -121,7 +139,8 @@ func bb_cgo_open_session(pamh *C.pam_handle_t) C.int {
 
 	_primaryPushChannel.NotifyPAMOpenSession(items)
 
-	return C.PAM_SUCCESS
+	status = C.PAM_SUCCESS
+	return
 }
 
 func init() {
