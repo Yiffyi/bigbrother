@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
 	"slices"
+	"strings"
 
 	"github.com/yiffyi/bigbrother/misc"
 
@@ -65,6 +67,78 @@ func installPAMFromFile(srcPath, dstPath string) error {
 	return installPAMFromReader(src, dstPath)
 }
 
+func patchPAMConfig(service string) {
+	orgFilename := "/etc/pam.d/" + service
+	tmpFilename := "/etc/pam.d/" + service + ".new"
+
+	orgInfo, err := os.Stat(orgFilename)
+	if err != nil {
+		fmt.Println("Could not check pam config for", service, err)
+		return
+	}
+
+	file, err := os.Open(orgFilename)
+	if err != nil {
+		fmt.Println("Could not open pam config for", service, err)
+		return
+	}
+	defer file.Close()
+
+	fileNew, err := os.OpenFile(tmpFilename, os.O_RDWR|os.O_CREATE, orgInfo.Mode())
+	if err != nil {
+		fmt.Println("Could not create temporary pam config for", service, err)
+		return
+	}
+	defer fileNew.Close()
+	defer os.Remove(tmpFilename)
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasSuffix(line, "# installed by bb") {
+			// skip previous installation lines
+			continue
+			// fmt.Println("PAM module already installed")
+			// return
+		} else {
+			fileNew.WriteString(line + "\n")
+		}
+	}
+
+	dstPath := viper.GetString("installer.pam_bb_path")
+	fileNew.WriteString(fmt.Sprintf("session optional %s # installed by bb\n", dstPath))
+
+	newContent, err := os.ReadFile(tmpFilename)
+	if err != nil {
+		fmt.Println("Could not read temporary pam config for", service, err)
+		return
+	}
+
+	fmt.Println("The patched pam config for", service, "is as follows:\n===", tmpFilename, "===")
+	fmt.Println(string(newContent))
+	fmt.Print("Is that OK? (Y/n) ")
+	ok := "Y"
+	fmt.Scanln(&ok)
+	if strings.ToLower(ok) == "y" {
+		err := os.Rename(orgFilename, orgFilename+".old")
+		if err != nil {
+			fmt.Println("Could not rename old pam config for", service, err)
+		} else {
+			err = os.Rename(tmpFilename, orgFilename)
+			if err != nil {
+				fmt.Println("Could not rename temporary pam config for", service, err)
+			}
+		}
+
+		if err == nil {
+			fmt.Println("Configured PAM service", service)
+			return
+		}
+	}
+
+	fmt.Println("Operation abored.")
+}
+
 func installPAM() {
 	dstPath := viper.GetString("installer.pam_bb_path")
 	if installPAMCustomSOFlag != "" {
@@ -93,6 +167,10 @@ func installPAM() {
 		if err := installPAMFromReader(r, dstPath); err == nil {
 			fmt.Println("Installed PAM module from embedded resources to", dstPath)
 		}
+	}
+
+	if installPAMToServiceFlag != "" {
+		patchPAMConfig(installPAMToServiceFlag)
 	}
 }
 
