@@ -33,7 +33,8 @@ func SetupLog() error {
 
 	if toConsole {
 		// Multi-writer setup
-		multi := zerolog.MultiLevelWriter(os.Stdout, logFile)
+		
+		multi := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr}, logFile)
 		log.Logger = zerolog.New(multi).With().Timestamp().Caller().Logger()
 	} else {
 		log.Logger = zerolog.New(logFile).With().Timestamp().Caller().Logger()
