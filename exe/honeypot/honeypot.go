@@ -30,7 +30,7 @@ func main() {
 		config.AddHostKey(v)
 	}
 
-	for _, addr := range viper.GetStringSlice("listen_addrs") {
+	for _, addr := range v.GetStringSlice("listen_addrs") {
 		go sshConnHandler(addr, config)
 	}
 
@@ -47,6 +47,7 @@ func main() {
 func sshConnHandler(listenAddr string, serverConfig *ssh.ServerConfig) {
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
+		log.Error().Err(err).Str("listenAddr", listenAddr).Msg("failed to listen")
 		panic(err)
 	}
 
