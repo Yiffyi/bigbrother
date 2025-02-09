@@ -99,31 +99,31 @@ func serveGlobalRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request) 
 
 func serveNewChannels(sid uint64, sshConn *ssh.ServerConn, in <-chan ssh.NewChannel) {
 	for newChannel := range in {
-		if t := newChannel.ChannelType(); t != "session" {
-			newChannel.Reject(ssh.UnknownChannelType, fmt.Sprintf("unknown channel type: %s", t))
+		if t := newChannel.ChannelType(); t == "session" {
+			ch, reqs, err := newChannel.Accept()
+			if err != nil {
+				log.Error().
+					Uint64("session_id", sid).
+					Str("type", newChannel.ChannelType()).
+					Err(err).
+					Msg("failed to accept new channel")
+				continue
+			}
+
 			log.Debug().
 				Uint64("session_id", sid).
 				Str("type", newChannel.ChannelType()).
-				Msg("rejected session channel")
-			continue
+				Msg("accepted new channel")
+
+			go serveSessionChannel(sid, sshConn, ch)
+			go servePerChannelRequests(sid, sshConn, reqs)
 		}
 
-		// only session channel will fall through
-		ch, reqs, err := newChannel.Accept()
-		if err != nil {
-			log.Error().
-				Uint64("session_id", sid).
-				Str("type", newChannel.ChannelType()).
-				Err(err).
-				Msg("failed to accept new channel")
-			continue
-		}
-		go serveSessionChannel(sid, sshConn, ch)
-		go servePerChannelRequests(sid, sshConn, reqs)
+		newChannel.Reject(ssh.UnknownChannelType, fmt.Sprintf("unknown channel type: %s", newChannel.ChannelType()))
 		log.Debug().
 			Uint64("session_id", sid).
 			Str("type", newChannel.ChannelType()).
-			Msg("accepted new channel")
+			Msg("rejected session channel")
 	}
 }
 
@@ -151,6 +151,28 @@ func servePerChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Reque
 				Str("payload", string(req.Payload)).
 				Bool("want_reply", req.WantReply).
 				Msg("shell spawn request accepted")
+		case "exec":
+			if req.WantReply {
+				req.Reply(true, nil)
+			}
+			var payload = struct{ Value string }{}
+			err := ssh.Unmarshal(req.Payload, &payload)
+			if err != nil {
+				log.Error().
+					Err(err).
+					Uint64("session_id", sid).
+					Str("type", req.Type).
+					Str("payload", string(req.Payload)).
+					Bool("want_reply", req.WantReply).
+					Msg("could not parse exec request payload")
+			} else {
+				log.Info().
+					Uint64("session_id", sid).
+					Str("type", req.Type).
+					Str("payload", payload.Value).
+					Bool("want_reply", req.WantReply).
+					Msg("exec request accepted")
+			}
 		default:
 			if req.WantReply {
 				req.Reply(false, nil)
