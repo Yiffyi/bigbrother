@@ -10,9 +10,13 @@ import (
 	"github.com/cespare/xxhash"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
+	"github.com/yiffyi/bigbrother/honeypot"
 	"github.com/yiffyi/bigbrother/misc"
 	"golang.org/x/crypto/ssh"
+	"gorm.io/gorm"
 )
+
+var db *gorm.DB
 
 func main() {
 	err := misc.LoadConfig([]string{"."})
@@ -22,6 +26,11 @@ func main() {
 	misc.SetupLog()
 
 	v := viper.Sub("honeypot")
+
+	db, err = honeypot.OpenDatabase(v)
+	if err != nil {
+		panic(err)
+	}
 
 	config := NewSSHServerConfig(v)
 	hostKeys := LoadHostKey(v)
@@ -202,10 +211,22 @@ func NewSSHServerConfig(v *viper.Viper) *ssh.ServerConfig {
 				Str("user", c.User()).
 				Str("password", string(pass)).
 				Msg("password auth attempt")
+
+			honeypot.RecordAuthAttempt(db, c.User(), string(pass), c.RemoteAddr())
+
 			if v.GetBool("allow_any_creds") {
 				return nil, nil
 			} else {
-				return nil, fmt.Errorf("password rejected for %q", c.User())
+				allow, err := honeypot.ShallAllowConnection(db, c.User(), string(pass), c.RemoteAddr())
+				if err != nil {
+					return nil, fmt.Errorf("password rejected due to internal error: %w", err)
+				}
+
+				if allow {
+					return nil, nil
+				} else {
+					return nil, fmt.Errorf("password rejected, please try harder")
+				}
 			}
 		},
 	}
