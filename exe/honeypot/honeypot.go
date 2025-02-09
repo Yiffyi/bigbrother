@@ -118,6 +118,7 @@ func serveNewChannels(sid uint64, sshConn *ssh.ServerConn, in <-chan ssh.NewChan
 
 			go serveSessionChannel(sid, sshConn, ch)
 			go servePerChannelRequests(sid, sshConn, reqs)
+			continue
 		}
 
 		newChannel.Reject(ssh.UnknownChannelType, fmt.Sprintf("unknown channel type: %s", newChannel.ChannelType()))
@@ -197,6 +198,7 @@ func NewSSHServerConfig(v *viper.Viper) *ssh.ServerConfig {
 			// Should use constant-time compare (or better, salt+hash) in a production setting.
 			log.Info().
 				Uint64("session_id", sid).
+				Str("addr", c.RemoteAddr().String()).
 				Str("user", c.User()).
 				Str("password", string(pass)).
 				Msg("password auth attempt")
