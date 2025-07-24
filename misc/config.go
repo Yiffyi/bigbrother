@@ -42,6 +42,23 @@ func setupViper(searchPaths []string) {
 	viper.SetDefault("installer.honeypot_path", "/usr/local/bin/honeypot")
 	viper.SetDefault("installer.honeypot_service_unit", "/etc/systemd/system/bb-honeypot.service")
 	viper.SetDefault("installer.pam_bb_path", "/usr/local/lib/pam_bb.so")
+
+	viper.SetDefault("ppp.ssh_keys", []string{"/etc/ssh/ssh_host_ed25519_key"})
+	viper.SetDefault("ppp.ssh_authorized_keys", "authorized_keys")
+
+	viper.SetDefault("ppp.agent.ctrl_addr", "127.0.0.1:8022")
+	viper.SetDefault("ppp.agent.hostname", "localhost")
+	viper.SetDefault("ppp.agent.report_interval", "1h")
+
+	viper.SetDefault("ppp.ctrl.base_url", "http://127.0.0.1:8080")
+	viper.SetDefault("ppp.ctrl.web_root", "public")
+	viper.SetDefault("ppp.ctrl.http_listen_addr", ":8080")
+	viper.SetDefault("ppp.ctrl.ssh_listen_addr", ":8022")
+	viper.SetDefault("ppp.ctrl.dsn", "data.db")
+	viper.SetDefault("ppp.ctrl.clash_sub_template", "clash_sub_template.yaml")
+	viper.SetDefault("ppp.ctrl.singbox_base_json", "sing-box.base.json")
+	viper.SetDefault("ppp.ctrl.key_rotate_interval", "144h")
+	viper.SetDefault("ppp.ctrl.keep_last_keys", 1)
 }
 
 func LoadConfig(extraSearchPaths []string) error {
