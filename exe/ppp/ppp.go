@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/yiffyi/bigbrother/misc"
 	"github.com/yiffyi/bigbrother/ppp/agent"
+	"github.com/yiffyi/bigbrother/ppp/ctrl"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(agent.SetupAgentCmd())
-	// rootCmd.AddCommand(ctrl.SetupCtrlCmd())
+	rootCmd.AddCommand(ctrl.SetupCtrlCmd())
 
 	rootCmd.Execute()
 }

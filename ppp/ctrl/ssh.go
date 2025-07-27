@@ -1,8 +1,11 @@
 package ctrl
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"sync"
@@ -10,6 +13,8 @@ import (
 	"github.com/cespare/xxhash"
 	"github.com/fsnotify/fsnotify"
 	"github.com/rs/zerolog/log"
+	"github.com/yiffyi/bigbrother/ppp"
+	"github.com/yiffyi/bigbrother/ppp/model"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -57,7 +62,12 @@ func NewAuthorizedKeysList(path string) (list *AuthorizedKeysList, err error) {
 			}
 		}
 	}()
-	return
+
+	err = list.Reload()
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
 }
 
 func (l *AuthorizedKeysList) Reload() error {
@@ -67,11 +77,18 @@ func (l *AuthorizedKeysList) Reload() error {
 	}
 
 	next := map[uint64]bool{}
-	for key, _, _, rest, err := ssh.ParseAuthorizedKey(b); err != nil || len(rest) > 0; b = rest {
-		next[xxhash.Sum64(key.Marshal())] = true
+
+	var key ssh.PublicKey
+	var rest []byte
+	for key, _, _, rest, err = ssh.ParseAuthorizedKey(b); err == nil; key, _, _, rest, err = ssh.ParseAuthorizedKey(rest) {
+		log.Debug().Str("path", l.path).Bytes("key", key.Marshal()).Bytes("authorized_key", ssh.MarshalAuthorizedKey(key)).Msg("loaded one authorized key")
+
+		b := key.Marshal()
+		hash := xxhash.Sum64(b)
+		next[hash] = true
 	}
 
-	if err != nil {
+	if err != nil && len(next) == 0 {
 		return err
 	}
 
@@ -96,7 +113,7 @@ func (l *AuthorizedKeysList) Close() {
 	l.watcher.Close()
 }
 
-func NewSSHServerConfig(serverVersion string, keyList AuthorizedKeysList) *ssh.ServerConfig {
+func NewSSHServerConfig(serverVersion string, keyList *AuthorizedKeysList) *ssh.ServerConfig {
 	return &ssh.ServerConfig{
 		ServerVersion: serverVersion,
 		PublicKeyCallback: func(c ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
@@ -106,7 +123,8 @@ func NewSSHServerConfig(serverVersion string, keyList AuthorizedKeysList) *ssh.S
 				Uint64("session_id", sid).
 				Str("addr", c.RemoteAddr().String()).
 				Str("user", c.User()).
-				Bytes("key", ssh.MarshalAuthorizedKey(key)).
+				Bytes("authorized_key", ssh.MarshalAuthorizedKey(key)).
+				Bytes("key", key.Marshal()).
 				Msg("public key auth attempt")
 
 			if keyList.OK(key.Marshal()) {
@@ -185,9 +203,12 @@ func ListenSSH(listenAddr string, serverConfig *ssh.ServerConfig) {
 
 func serveGlobalRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request) {
 	for req := range in {
+		// This handles keepalive messages and matches
+		// the behaviour of OpenSSH.
 		if req.WantReply {
 			req.Reply(false, nil)
 		}
+
 		log.Debug().
 			Uint64("session_id", sid).
 			Str("type", req.Type).
@@ -197,9 +218,52 @@ func serveGlobalRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request) 
 	}
 }
 
+func serveChannel(sid uint64, _ *ssh.ServerConn, channel ssh.Channel) {
+	req := model.UpdateProxyConfigRequest{
+		ProxyType: "sing-box",
+
+		ConfigFile: []byte("{}"),
+		Restart:    true,
+	}
+
+	buf := bytes.NewBuffer([]byte{})
+	gob.NewEncoder(buf).Encode(req)
+
+	channel.SendRequest("updateProxyConfig", true, buf.Bytes())
+	io.Copy(io.Discard, channel)
+}
+
+func serveChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request) {
+	for sshReq := range in {
+		switch sshReq.Type {
+		case "reportStatus":
+			reqDec := gob.NewDecoder(bytes.NewReader(sshReq.Payload))
+			var req model.ReportStatusRequest
+			err := reqDec.Decode(&req)
+			if err != nil {
+				sshReq.Reply(false, nil)
+				continue
+			}
+
+			log.Info().Interface("req", req).Msg("received reportStatus")
+			sshReq.Reply(true, nil)
+		default:
+			if sshReq.WantReply {
+				sshReq.Reply(false, nil)
+			}
+			log.Debug().
+				Uint64("session_id", sid).
+				Str("type", sshReq.Type).
+				Bool("want_reply", sshReq.WantReply).
+				Bytes("payload", sshReq.Payload).
+				Msg("rejected per-channel request")
+		}
+	}
+}
+
 func serveNewChannels(sid uint64, sshConn *ssh.ServerConn, in <-chan ssh.NewChannel) {
 	for newChannel := range in {
-		if t := newChannel.ChannelType(); t == "lklk/ppp" {
+		if t := newChannel.ChannelType(); t == ppp.SSH_CHANNEL_V1 {
 			ch, reqs, err := newChannel.Accept()
 			if err != nil {
 				log.Error().
@@ -215,8 +279,8 @@ func serveNewChannels(sid uint64, sshConn *ssh.ServerConn, in <-chan ssh.NewChan
 				Str("type", newChannel.ChannelType()).
 				Msg("accepted new channel")
 
-			go serveSessionChannel(sid, sshConn, ch)
-			go servePerChannelRequests(sid, sshConn, reqs)
+			go serveChannel(sid, sshConn, ch)
+			go serveChannelRequests(sid, sshConn, reqs)
 			continue
 		}
 
