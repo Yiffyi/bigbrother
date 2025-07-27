@@ -50,6 +50,9 @@ func setupViper(searchPaths []string) {
 	viper.SetDefault("ppp.agent.ssh_known_hosts", "known_hosts")
 	viper.SetDefault("ppp.agent.hostname", "localhost")
 	viper.SetDefault("ppp.agent.report_interval", "1h")
+	viper.SetDefault("ppp.agent.proxy_type", "sing-box")
+	viper.SetDefault("ppp.agent.proxy_program", "sing-box")
+	viper.SetDefault("ppp.agent.proxy_args", []string{"-c", "stdin", "run"})
 
 	viper.SetDefault("ppp.ctrl.base_url", "http://127.0.0.1:8080")
 	viper.SetDefault("ppp.ctrl.web_root", "public")

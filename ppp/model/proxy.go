@@ -3,19 +3,15 @@ package model
 import "time"
 
 type UpdateProxyConfigRequest struct {
-	DaemonType string
+	ProxyType string
 
 	ConfigFile []byte
 	Restart    bool
 }
 
-type UpdateProxyConfigResponse struct {
-	Error error
-}
-
 type ReportStatusRequest struct {
-	DaemonType string
-	Running    bool
+	ProxyType string
+	Running   bool
 
 	SystemTime     time.Time
 	CPUPercent     float64

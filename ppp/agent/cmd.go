@@ -1,12 +1,15 @@
 package agent
 
 import (
+	"bytes"
+	"encoding/gob"
 	"os"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/yiffyi/bigbrother/ppp"
+	"github.com/yiffyi/bigbrother/ppp/model"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 )
@@ -20,15 +23,6 @@ var agentCmd = &cobra.Command{
 
 func SetupAgentCmd() *cobra.Command {
 	return agentCmd
-}
-
-func handleReqs(in <-chan *ssh.Request) {
-	for req := range in {
-		switch req.Type {
-		case "updateProxyConfig":
-
-		}
-	}
 }
 
 func agentMain(ctrlAddr string, knownHostsPath string, sshUser string, sshPrivKeyPath string) (err error) {
@@ -78,7 +72,26 @@ func agentMain(ctrlAddr string, knownHostsPath string, sshUser string, sshPrivKe
 
 	// We don't need to send anything
 	pppChan.CloseWrite()
-	handleReqs(pppReqs)
+
+	proxy, err := NewProxy(viper.GetString("ppp.agent.proxy_type"), viper.GetString("ppp.agent.proxy_program"), viper.GetStringSlice("ppp.agent.proxy_args"), nil)
+	if err != nil {
+		return err
+	}
+
+	for sshReq := range pppReqs {
+		switch sshReq.Type {
+		case "updateProxyConfig":
+			reqDec := gob.NewDecoder(bytes.NewReader(sshReq.Payload))
+			var req model.UpdateProxyConfigRequest
+			err = reqDec.Decode(&req)
+			if err != nil {
+				sshReq.Reply(false, nil)
+				continue
+			}
+			err = proxy.UpdateProxyConfig(req.ConfigFile, req.Restart)
+			sshReq.Reply(err == nil, nil)
+		}
+	}
 
 	return nil
 }
