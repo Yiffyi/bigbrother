@@ -64,9 +64,9 @@ func agentMain(ctrlAddr string, knownHostsPath string, sshUser string, sshPrivKe
 	}
 	defer client.Close()
 
-	pppChan, pppReqs, err := client.OpenChannel(ppp.PPP_SSH_CHANNEL_V1, nil)
+	pppChan, pppReqs, err := client.OpenChannel(ppp.SSH_CHANNEL_V1, nil)
 	if err != nil {
-		log.Fatal().Err(err).Str("chan", ppp.PPP_SSH_CHANNEL_V1).Str("ctrlAddr", ctrlAddr).Msg("could not open channel, maybe that's not our control server")
+		log.Fatal().Err(err).Str("chan", ppp.SSH_CHANNEL_V1).Str("ctrlAddr", ctrlAddr).Msg("could not open channel, maybe that's not our control server")
 	}
 	defer pppChan.Close()
 
@@ -88,6 +88,7 @@ func agentMain(ctrlAddr string, knownHostsPath string, sshUser string, sshPrivKe
 				sshReq.Reply(false, nil)
 				continue
 			}
+			log.Info().Bytes("config", req.ConfigFile).Bool("restart", req.Restart).Msg("received new proxy config")
 			err = proxy.UpdateProxyConfig(req.ConfigFile, req.Restart)
 			sshReq.Reply(err == nil, nil)
 		}
