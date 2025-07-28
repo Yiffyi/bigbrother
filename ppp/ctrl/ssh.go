@@ -161,7 +161,7 @@ func LoadHostKey(hostKeyPath []string) []ssh.Signer {
 	return ret
 }
 
-func ListenSSH(listenAddr string, serverConfig *ssh.ServerConfig) {
+func ListenSSH(listenAddr string, serverConfig *ssh.ServerConfig, proxyController *ProxyController) {
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		log.Error().Err(err).Str("listenAddr", listenAddr).Msg("failed to listen")
@@ -197,7 +197,7 @@ func ListenSSH(listenAddr string, serverConfig *ssh.ServerConfig) {
 
 		// Discard all global out-of-band Requests
 		go serveGlobalRequests(sid, sshConn, reqs)
-		go serveNewChannels(sid, sshConn, chans)
+		go serveNewChannels(sid, sshConn, chans, proxyController)
 	}
 }
 
@@ -218,22 +218,26 @@ func serveGlobalRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request) 
 	}
 }
 
-func serveChannel(sid uint64, _ *ssh.ServerConn, channel ssh.Channel) {
-	req := model.UpdateProxyConfigRequest{
-		ProxyType: "sing-box",
+func serveChannel(sid uint64, _ *ssh.ServerConn, channel ssh.Channel, proxyController *ProxyController) {
+	cfg, err := proxyController.GetSubscription("sing-box")
+	if err == nil {
+		req := model.UpdateProxyConfigRequest{
+			ProxyType: "sing-box",
 
-		ConfigFile: []byte("{}"),
-		Restart:    true,
+			ConfigFile: cfg,
+			Restart:    true,
+		}
+
+		buf := bytes.NewBuffer([]byte{})
+		gob.NewEncoder(buf).Encode(req)
+
+		channel.SendRequest("updateProxyConfig", true, buf.Bytes())
 	}
 
-	buf := bytes.NewBuffer([]byte{})
-	gob.NewEncoder(buf).Encode(req)
-
-	channel.SendRequest("updateProxyConfig", true, buf.Bytes())
 	io.Copy(io.Discard, channel)
 }
 
-func serveChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request) {
+func serveChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request, proxyController *ProxyController) {
 	for sshReq := range in {
 		switch sshReq.Type {
 		case "reportStatus":
@@ -261,7 +265,7 @@ func serveChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request)
 	}
 }
 
-func serveNewChannels(sid uint64, sshConn *ssh.ServerConn, in <-chan ssh.NewChannel) {
+func serveNewChannels(sid uint64, sshConn *ssh.ServerConn, in <-chan ssh.NewChannel, proxyController *ProxyController) {
 	for newChannel := range in {
 		if t := newChannel.ChannelType(); t == ppp.SSH_CHANNEL_V1 {
 			ch, reqs, err := newChannel.Accept()
@@ -279,8 +283,8 @@ func serveNewChannels(sid uint64, sshConn *ssh.ServerConn, in <-chan ssh.NewChan
 				Str("type", newChannel.ChannelType()).
 				Msg("accepted new channel")
 
-			go serveChannel(sid, sshConn, ch)
-			go serveChannelRequests(sid, sshConn, reqs)
+			go serveChannel(sid, sshConn, ch, proxyController)
+			go serveChannelRequests(sid, sshConn, reqs, proxyController)
 			continue
 		}
 

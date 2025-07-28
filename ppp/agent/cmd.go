@@ -73,7 +73,7 @@ func agentMain(ctrlAddr string, knownHostsPath string, sshUser string, sshPrivKe
 	// We don't need to send anything
 	pppChan.CloseWrite()
 
-	proxy, err := NewProxy(viper.GetString("ppp.agent.proxy_type"), viper.GetString("ppp.agent.proxy_program"), viper.GetStringSlice("ppp.agent.proxy_args"), nil)
+	proxy, err := NewProxy(viper.GetString("ppp.agent.proxy_type"), viper.GetString("ppp.agent.proxy_program"), viper.GetStringSlice("ppp.agent.proxy_args"), nil, viper.GetBool("ppp.agent.proxy_share_console"))
 	if err != nil {
 		return err
 	}

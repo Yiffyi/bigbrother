@@ -3,6 +3,7 @@ package agent
 import (
 	"bytes"
 	"errors"
+	"os"
 	"os/exec"
 
 	"github.com/rs/zerolog/log"
@@ -12,12 +13,13 @@ type Proxy struct {
 	DaemonType string
 	Config     []byte
 
-	process *exec.Cmd
-	program string
-	args    []string
+	process      *exec.Cmd
+	program      string
+	args         []string
+	shareConsole bool
 }
 
-func NewProxy(daemonType string, program string, args []string, config []byte) (*Proxy, error) {
+func NewProxy(daemonType string, program string, args []string, config []byte, shareConsole bool) (*Proxy, error) {
 	if _, err := exec.LookPath(program); err != nil {
 		return nil, err
 	}
@@ -26,9 +28,10 @@ func NewProxy(daemonType string, program string, args []string, config []byte) (
 		DaemonType: daemonType,
 		Config:     config,
 
-		process: nil,
-		program: program,
-		args:    args,
+		process:      nil,
+		program:      program,
+		args:         args,
+		shareConsole: shareConsole,
 	}, nil
 }
 
@@ -51,6 +54,11 @@ func (p *Proxy) Start() error {
 
 	if p.Config != nil {
 		p.process.Stdin = bytes.NewReader(p.Config)
+	}
+
+	if p.shareConsole {
+		p.process.Stdout = os.Stdout
+		p.process.Stderr = os.Stderr
 	}
 
 	err := p.process.Start()

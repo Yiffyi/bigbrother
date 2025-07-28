@@ -29,7 +29,16 @@ func ctrlMain() error {
 		serverConfig.AddHostKey(hostKey)
 	}
 
-	ListenSSH(viper.GetString("ppp.ctrl.ssh_listen_addr"), serverConfig)
+	proxyController := &ProxyController{
+		clashSub: &ClashSubscriptionGenerator{
+			templatePath: viper.GetString("ppp.ctrl.clash_sub_template"),
+		},
+		singBoxSub: &SingBoxSubscriptionGenerator{
+			templatePath: viper.GetString("ppp.ctrl.singbox_base_json"),
+		},
+	}
+
+	ListenSSH(viper.GetString("ppp.ctrl.ssh_listen_addr"), serverConfig, proxyController)
 
 	return nil
 }
