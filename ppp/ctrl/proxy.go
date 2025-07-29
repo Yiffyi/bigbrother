@@ -1,95 +1,65 @@
 package ctrl
 
 import (
-	"encoding/json"
 	"errors"
-	"os"
-
-	"gopkg.in/yaml.v3"
+	"fmt"
 )
 
-type SubscriptionGenerator interface {
-	ProxyType() string
-	ContentType() string
-	RenderTemplate() ([]byte, error)
+type ProxyServerSupplementInfo interface {
+	Specialize(clientType string, genericInfo map[string]any) (map[string]any, error)
 }
 
-type SingBoxSubscriptionGenerator struct {
-	templatePath string
+type ProxyServerInfo struct {
+	Protocol   string
+	Tag        string
+	Server     string
+	ServerPort int
+	Password   string
+
+	SupplementInfo ProxyServerSupplementInfo
 }
 
-func (g *SingBoxSubscriptionGenerator) ProxyType() string {
-	return "sing-box"
+type Hysteria2SupplementInfo struct {
+	up            int
+	down          int
+	tls           bool
+	tlsServerName string
 }
 
-func (g *SingBoxSubscriptionGenerator) ContentType() string {
-	return "application/json"
-}
-
-func (g *SingBoxSubscriptionGenerator) RenderTemplate() ([]byte, error) {
-	b, err := os.ReadFile(g.templatePath)
-	if err != nil {
-		return nil, err
+func (s *Hysteria2SupplementInfo) singBox() map[string]any {
+	return map[string]any{
+		"up_mbps":   s.up,
+		"down_mbps": s.down,
+		"tls": map[string]any{
+			"enabled":     s.tls,
+			"server_name": s.tlsServerName,
+		},
 	}
+}
 
-	var p map[string]interface{}
-	err = json.Unmarshal(b, &p)
-	if err != nil {
-		return nil, err
+func (s *Hysteria2SupplementInfo) clash() map[string]any {
+	return map[string]any{
+		"tls":  s.tls,
+		"sni":  s.tlsServerName,
+		"up":   fmt.Sprintf("%d Mbps", s.up),
+		"down": fmt.Sprintf("%d Mbps", s.down),
 	}
-
-	b, err = json.MarshalIndent(p, "", "    ")
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
 }
 
-type ClashSubscriptionGenerator struct {
-	templatePath string
-}
-
-func (g *ClashSubscriptionGenerator) ProxyType() string {
-	return "clash"
-}
-
-func (g *ClashSubscriptionGenerator) ContentType() string {
-	return "application/yaml"
-}
-
-func (g *ClashSubscriptionGenerator) RenderTemplate() ([]byte, error) {
-	b, err := os.ReadFile(g.templatePath)
-	if err != nil {
-		return nil, err
-	}
-
-	var p map[string]interface{}
-	err = yaml.Unmarshal(b, &p)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err = yaml.Marshal(p)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
-}
-
-type ProxyController struct {
-	clashSub   SubscriptionGenerator
-	singBoxSub SubscriptionGenerator
-}
-
-func (c *ProxyController) GetSubscription(proxyType string) ([]byte, error) {
-	switch proxyType {
+func (s *Hysteria2SupplementInfo) Specialize(clientType string, genericInfo map[string]any) (map[string]any, error) {
+	var supp map[string]any
+	switch clientType {
 	case "sing-box":
-		return c.singBoxSub.RenderTemplate()
+		supp = s.singBox()
 	case "clash":
-		return c.clashSub.RenderTemplate()
+		supp = s.clash()
 	default:
-		return nil, errors.New("unsupported proxy type")
+		return nil, errors.New("unsupported client type")
 	}
+
+	for k, v := range supp {
+		genericInfo[k] = v
+	}
+
+	return genericInfo, nil
 }

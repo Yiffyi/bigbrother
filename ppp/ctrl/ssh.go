@@ -161,7 +161,7 @@ func LoadHostKey(hostKeyPath []string) []ssh.Signer {
 	return ret
 }
 
-func ListenSSH(listenAddr string, serverConfig *ssh.ServerConfig, proxyController *ProxyController) {
+func ListenSSH(listenAddr string, serverConfig *ssh.ServerConfig, proxyController *SubscriptionController) {
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		log.Error().Err(err).Str("listenAddr", listenAddr).Msg("failed to listen")
@@ -218,7 +218,7 @@ func serveGlobalRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request) 
 	}
 }
 
-func serveChannel(sid uint64, _ *ssh.ServerConn, channel ssh.Channel, proxyController *ProxyController) {
+func serveChannel(sid uint64, _ *ssh.ServerConn, channel ssh.Channel, proxyController *SubscriptionController) {
 	cfg, err := proxyController.GetSubscription("sing-box")
 	if err == nil {
 		req := model.UpdateProxyConfigRequest{
@@ -237,7 +237,7 @@ func serveChannel(sid uint64, _ *ssh.ServerConn, channel ssh.Channel, proxyContr
 	io.Copy(io.Discard, channel)
 }
 
-func serveChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request, proxyController *ProxyController) {
+func serveChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request, proxyController *SubscriptionController) {
 	for sshReq := range in {
 		switch sshReq.Type {
 		case "reportStatus":
@@ -265,7 +265,7 @@ func serveChannelRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request,
 	}
 }
 
-func serveNewChannels(sid uint64, sshConn *ssh.ServerConn, in <-chan ssh.NewChannel, proxyController *ProxyController) {
+func serveNewChannels(sid uint64, sshConn *ssh.ServerConn, in <-chan ssh.NewChannel, proxyController *SubscriptionController) {
 	for newChannel := range in {
 		if t := newChannel.ChannelType(); t == ppp.SSH_CHANNEL_V1 {
 			ch, reqs, err := newChannel.Accept()
