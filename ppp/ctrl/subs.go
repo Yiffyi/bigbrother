@@ -5,11 +5,12 @@ import (
 	"errors"
 	"os"
 
+	"github.com/yiffyi/bigbrother/ppp/model"
 	"gopkg.in/yaml.v3"
 )
 
 type SubscriptionTemplate interface {
-	ClientType() string
+	ClientType() model.ProgramType
 	ContentType() string
 	RenderTemplate(servers []ProxyServerInfo) ([]byte, error)
 }
@@ -18,7 +19,7 @@ type SingBoxSubscriptionTemplate struct {
 	templatePath string
 }
 
-func (g *SingBoxSubscriptionTemplate) ClientType() string {
+func (g *SingBoxSubscriptionTemplate) ClientType() model.ProgramType {
 	return "sing-box"
 }
 
@@ -50,8 +51,8 @@ type ClashSubscriptionTemplate struct {
 	templatePath string
 }
 
-func (g *ClashSubscriptionTemplate) ClientType() string {
-	return "clash"
+func (g *ClashSubscriptionTemplate) ClientType() model.ProgramType {
+	return model.PROGRAM_TYPE_CLASH
 }
 
 func (g *ClashSubscriptionTemplate) ContentType() string {
@@ -79,7 +80,7 @@ func (g *ClashSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) ([
 }
 
 type SubscriptionController struct {
-	genMap  map[string]SubscriptionTemplate
+	genMap  map[model.ProgramType]SubscriptionTemplate
 	servers []ProxyServerInfo
 }
 
@@ -97,7 +98,7 @@ func NewSubscriptionController(generators []SubscriptionTemplate) (*Subscription
 }
 
 func (c *SubscriptionController) GetSubscription(clientType string) ([]byte, error) {
-	if gen, ok := c.genMap[clientType]; ok {
+	if gen, ok := c.genMap[model.ProgramType(clientType)]; ok {
 		return gen.RenderTemplate(c.servers)
 	} else {
 		return nil, errors.New("unsupported proxy type")

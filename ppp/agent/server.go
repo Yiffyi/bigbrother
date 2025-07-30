@@ -7,10 +7,11 @@ import (
 	"os/exec"
 
 	"github.com/rs/zerolog/log"
+	"github.com/yiffyi/bigbrother/ppp/model"
 )
 
-type Proxy struct {
-	DaemonType string
+type Server struct {
+	ServerType model.ProgramType
 	Config     []byte
 
 	process      *exec.Cmd
@@ -19,13 +20,13 @@ type Proxy struct {
 	shareConsole bool
 }
 
-func NewProxy(daemonType string, program string, args []string, config []byte, shareConsole bool) (*Proxy, error) {
+func NewServer(serverType model.ProgramType, program string, args []string, config []byte, shareConsole bool) (*Server, error) {
 	if _, err := exec.LookPath(program); err != nil {
 		return nil, err
 	}
 
-	return &Proxy{
-		DaemonType: daemonType,
+	return &Server{
+		ServerType: serverType,
 		Config:     config,
 
 		process:      nil,
@@ -35,7 +36,7 @@ func NewProxy(daemonType string, program string, args []string, config []byte, s
 	}, nil
 }
 
-func (p *Proxy) monitor() {
+func (p *Server) monitor() {
 	err := p.process.Wait()
 	if err != nil {
 		log.Warn().Err(err).Msg("proxy process stopped with error")
@@ -45,7 +46,7 @@ func (p *Proxy) monitor() {
 	p.process = nil
 }
 
-func (p *Proxy) Start() error {
+func (p *Server) Start() error {
 	if p.process != nil {
 		return errors.New("proxy process already started")
 	}
@@ -71,7 +72,7 @@ func (p *Proxy) Start() error {
 	return nil
 }
 
-func (p *Proxy) Stop() error {
+func (p *Server) Stop() error {
 	if p.process == nil {
 		return errors.New("proxy process not started")
 	}
@@ -90,7 +91,7 @@ func (p *Proxy) Stop() error {
 	return nil
 }
 
-func (p *Proxy) IsRunning() bool {
+func (p *Server) IsRunning() bool {
 	if p.process == nil {
 		return false
 	}
@@ -102,7 +103,7 @@ func (p *Proxy) IsRunning() bool {
 	return true
 }
 
-func (p *Proxy) UpdateProxyConfig(config []byte, restart bool) error {
+func (p *Server) UpdateServerConfig(config []byte, restart bool) error {
 	p.Config = config
 
 	if restart {
