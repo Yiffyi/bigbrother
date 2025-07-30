@@ -29,11 +29,11 @@ func ctrlMain() error {
 		serverConfig.AddHostKey(hostKey)
 	}
 
-	proxyCtrl, err := NewSubscriptionController([]SubscriptionGenerator{
-		&ClashSubscriptionGenerator{
+	proxyCtrl, err := NewSubscriptionController([]SubscriptionTemplate{
+		&ClashSubscriptionTemplate{
 			templatePath: viper.GetString("ppp.ctrl.clash_sub_template"),
 		},
-		&SingBoxSubscriptionGenerator{
+		&SingBoxSubscriptionTemplate{
 			templatePath: viper.GetString("ppp.ctrl.singbox_base_json"),
 		},
 	})

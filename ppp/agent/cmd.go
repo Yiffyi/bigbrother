@@ -82,14 +82,14 @@ func agentMain(ctrlAddr string, knownHostsPath string, sshUser string, sshPrivKe
 		switch sshReq.Type {
 		case "updateProxyConfig":
 			reqDec := gob.NewDecoder(bytes.NewReader(sshReq.Payload))
-			var req model.UpdateProxyConfigRequest
+			var req model.UpdateServerConfigRequest
 			err = reqDec.Decode(&req)
 			if err != nil {
 				sshReq.Reply(false, nil)
 				continue
 			}
-			log.Info().Bytes("config", req.ConfigFile).Bool("restart", req.Restart).Msg("received new proxy config")
-			err = proxy.UpdateProxyConfig(req.ConfigFile, req.Restart)
+			log.Info().Bytes("config", req.Config).Bool("restart", req.Restart).Msg("received new proxy config")
+			err = proxy.UpdateProxyConfig(req.Config, req.Restart)
 			sshReq.Reply(err == nil, nil)
 		}
 	}

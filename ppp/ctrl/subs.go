@@ -8,25 +8,25 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type SubscriptionGenerator interface {
+type SubscriptionTemplate interface {
 	ClientType() string
 	ContentType() string
 	RenderTemplate(servers []ProxyServerInfo) ([]byte, error)
 }
 
-type SingBoxSubscriptionGenerator struct {
+type SingBoxSubscriptionTemplate struct {
 	templatePath string
 }
 
-func (g *SingBoxSubscriptionGenerator) ClientType() string {
+func (g *SingBoxSubscriptionTemplate) ClientType() string {
 	return "sing-box"
 }
 
-func (g *SingBoxSubscriptionGenerator) ContentType() string {
+func (g *SingBoxSubscriptionTemplate) ContentType() string {
 	return "application/json"
 }
 
-func (g *SingBoxSubscriptionGenerator) RenderTemplate(servers []ProxyServerInfo) ([]byte, error) {
+func (g *SingBoxSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) ([]byte, error) {
 	b, err := os.ReadFile(g.templatePath)
 	if err != nil {
 		return nil, err
@@ -46,19 +46,19 @@ func (g *SingBoxSubscriptionGenerator) RenderTemplate(servers []ProxyServerInfo)
 	return b, nil
 }
 
-type ClashSubscriptionGenerator struct {
+type ClashSubscriptionTemplate struct {
 	templatePath string
 }
 
-func (g *ClashSubscriptionGenerator) ClientType() string {
+func (g *ClashSubscriptionTemplate) ClientType() string {
 	return "clash"
 }
 
-func (g *ClashSubscriptionGenerator) ContentType() string {
+func (g *ClashSubscriptionTemplate) ContentType() string {
 	return "application/yaml"
 }
 
-func (g *ClashSubscriptionGenerator) RenderTemplate(servers []ProxyServerInfo) ([]byte, error) {
+func (g *ClashSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) ([]byte, error) {
 	b, err := os.ReadFile(g.templatePath)
 	if err != nil {
 		return nil, err
@@ -79,11 +79,11 @@ func (g *ClashSubscriptionGenerator) RenderTemplate(servers []ProxyServerInfo) (
 }
 
 type SubscriptionController struct {
-	genMap  map[string]SubscriptionGenerator
+	genMap  map[string]SubscriptionTemplate
 	servers []ProxyServerInfo
 }
 
-func NewSubscriptionController(generators []SubscriptionGenerator) (*SubscriptionController, error) {
+func NewSubscriptionController(generators []SubscriptionTemplate) (*SubscriptionController, error) {
 	c := &SubscriptionController{}
 	for _, v := range generators {
 		if _, ok := c.genMap[v.ClientType()]; !ok {

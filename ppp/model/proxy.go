@@ -2,16 +2,16 @@ package model
 
 import "time"
 
-type UpdateProxyConfigRequest struct {
-	ProxyType string
+type UpdateServerConfigRequest struct {
+	ServerType string
 
-	ConfigFile []byte
-	Restart    bool
+	Config  []byte
+	Restart bool
 }
 
 type ReportStatusRequest struct {
-	ProxyType string
-	Running   bool
+	ServerType string
+	Running    bool
 
 	SystemTime     time.Time
 	CPUPercent     float64

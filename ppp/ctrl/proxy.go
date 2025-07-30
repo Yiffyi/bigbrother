@@ -6,7 +6,8 @@ import (
 )
 
 type ProxyServerSupplementInfo interface {
-	Specialize(clientType string, genericInfo map[string]any) (map[string]any, error)
+	SpecializeClientConfig(clientType string, genericInfo map[string]any) (map[string]any, error)
+	SpecializeServerConfig(serverType string, genericInfo map[string]any) (map[string]any, error)
 }
 
 type ProxyServerInfo struct {
@@ -46,7 +47,7 @@ func (s *Hysteria2SupplementInfo) clash() map[string]any {
 	}
 }
 
-func (s *Hysteria2SupplementInfo) Specialize(clientType string, genericInfo map[string]any) (map[string]any, error) {
+func (s *Hysteria2SupplementInfo) SpecializeClientConfig(clientType string, genericInfo map[string]any) (map[string]any, error) {
 	var supp map[string]any
 	switch clientType {
 	case "sing-box":

@@ -221,11 +221,11 @@ func serveGlobalRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request) 
 func serveChannel(sid uint64, _ *ssh.ServerConn, channel ssh.Channel, proxyController *SubscriptionController) {
 	cfg, err := proxyController.GetSubscription("sing-box")
 	if err == nil {
-		req := model.UpdateProxyConfigRequest{
-			ProxyType: "sing-box",
+		req := model.UpdateServerConfigRequest{
+			ServerType: "sing-box",
 
-			ConfigFile: cfg,
-			Restart:    true,
+			Config:  cfg,
+			Restart: true,
 		}
 
 		buf := bytes.NewBuffer([]byte{})
