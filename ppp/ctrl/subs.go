@@ -20,7 +20,7 @@ type SingBoxSubscriptionTemplate struct {
 }
 
 func (g *SingBoxSubscriptionTemplate) ClientType() model.ProgramType {
-	return "sing-box"
+	return model.PROGRAM_TYPE_SINGBOX
 }
 
 func (g *SingBoxSubscriptionTemplate) ContentType() string {
@@ -37,6 +37,23 @@ func (g *SingBoxSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) 
 	err = json.Unmarshal(b, &p)
 	if err != nil {
 		return nil, err
+	}
+
+	if outbounds, ok := p["outbounds"].([]any); ok {
+		for _, s := range servers {
+			info := map[string]any{
+				"type":        s.Protocol,
+				"tag":         s.Tag,
+				"server":      s.Server,
+				"server_port": s.ServerPort,
+			}
+
+			info, err := s.SupplementInfo.SpecializeClientConfig(model.PROGRAM_TYPE_SINGBOX, j)
+			if err != nil {
+				return nil, err
+			}
+			outbounds = append(outbounds, info)
+		}
 	}
 
 	b, err = json.MarshalIndent(p, "", "    ")
@@ -69,6 +86,23 @@ func (g *ClashSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) ([
 	err = yaml.Unmarshal(b, &p)
 	if err != nil {
 		return nil, err
+	}
+
+	if outbounds, ok := p["proxies"].([]any); ok {
+		for _, s := range servers {
+			info := map[string]any{
+				"name":   s.Tag,
+				"type":   s.Protocol,
+				"server": s.Server,
+				"port":   s.ServerPort,
+			}
+
+			info, err := s.SupplementInfo.SpecializeClientConfig(model.PROGRAM_TYPE_SINGBOX, j)
+			if err != nil {
+				return nil, err
+			}
+			outbounds = append(outbounds, info)
+		}
 	}
 
 	b, err = yaml.Marshal(p)
