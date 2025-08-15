@@ -79,7 +79,7 @@ func (s *Hysteria2SupplementInfo) SpecializeClientConfig(clientType model.Progra
 	var supp map[string]any
 	switch clientType {
 	case "sing-box":
-		supp = s.singBox()
+		supp = s.singBoxClient()
 	case "clash":
 		supp = s.clash()
 	default:

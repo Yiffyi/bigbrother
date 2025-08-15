@@ -48,7 +48,7 @@ func (g *SingBoxSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) 
 				"server_port": s.ServerPort,
 			}
 
-			info, err := s.SupplementInfo.SpecializeClientConfig(model.PROGRAM_TYPE_SINGBOX, j)
+			info, err := s.SupplementInfo.SpecializeClientConfig(model.PROGRAM_TYPE_SINGBOX, info)
 			if err != nil {
 				return nil, err
 			}
@@ -97,7 +97,7 @@ func (g *ClashSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) ([
 				"port":   s.ServerPort,
 			}
 
-			info, err := s.SupplementInfo.SpecializeClientConfig(model.PROGRAM_TYPE_SINGBOX, j)
+			info, err := s.SupplementInfo.SpecializeClientConfig(model.PROGRAM_TYPE_SINGBOX, info)
 			if err != nil {
 				return nil, err
 			}
