@@ -22,22 +22,22 @@ type ProxyServerInfo struct {
 }
 
 type Hysteria2SupplementInfo struct {
-	password      string
-	up            int
-	down          int
-	tls           bool
-	tlsServerName string
-	acmeEmail     string
+	Password      string
+	Up            int
+	Down          int
+	TLS           bool
+	TLSServerName string
+	ACMEEmail     string
 }
 
 func (s *Hysteria2SupplementInfo) singBoxClient() map[string]any {
 	return map[string]any{
-		"password":  s.password,
-		"up_mbps":   s.up,
-		"down_mbps": s.down,
+		"password":  s.Password,
+		"up_mbps":   s.Up,
+		"down_mbps": s.Down,
 		"tls": map[string]any{
-			"enabled":     s.tls,
-			"server_name": s.tlsServerName,
+			"enabled":     s.TLS,
+			"server_name": s.TLSServerName,
 		},
 	}
 }
@@ -47,18 +47,18 @@ func (s *Hysteria2SupplementInfo) singBoxServer() map[string]any {
 		"users": []map[string]any{
 			{
 				"name":     "sekai",
-				"password": s.password,
+				"password": s.Password,
 			},
 		},
-		"up_mbps":                 s.up,
-		"down_mbps":               s.down,
+		"up_mbps":                 s.Up,
+		"down_mbps":               s.Down,
 		"ignore_client_bandwidth": false,
 		"tls": map[string]any{
-			"enabled":     s.tls,
-			"server_name": s.tlsServerName,
+			"enabled":     s.TLS,
+			"server_name": s.TLSServerName,
 			"acme": map[string]any{
-				"domain": s.tlsServerName,
-				"email":  s.acmeEmail,
+				"domain": s.TLSServerName,
+				"email":  s.ACMEEmail,
 			},
 			"alpn": []string{
 				"h3",
@@ -68,10 +68,10 @@ func (s *Hysteria2SupplementInfo) singBoxServer() map[string]any {
 }
 func (s *Hysteria2SupplementInfo) clash() map[string]any {
 	return map[string]any{
-		"tls":  s.tls,
-		"sni":  s.tlsServerName,
-		"up":   fmt.Sprintf("%d Mbps", s.up),
-		"down": fmt.Sprintf("%d Mbps", s.down),
+		"tls":  s.TLS,
+		"sni":  s.TLSServerName,
+		"up":   fmt.Sprintf("%d Mbps", s.Up),
+		"down": fmt.Sprintf("%d Mbps", s.Down),
 	}
 }
 
@@ -106,40 +106,40 @@ func (s *Hysteria2SupplementInfo) SpecializeServerConfig(serverType model.Progra
 }
 
 type VmessSupplementInfo struct {
-	uuid              string
-	security          string
-	alterId           int
-	tls               bool
-	tlsServerName     string
-	utls              bool
-	utlsFingerprint   string
-	reality           bool
-	realityPrivateKey string
-	realityPublicKey  string
-	realityShortId    string
-	multiplex         bool
+	UUID              string
+	Security          string
+	AlterId           int
+	TLS               bool
+	TLSServerName     string
+	UTLS              bool
+	UTLSFingerprint   string
+	Reality           bool
+	RealityPrivateKey string
+	RealityPublicKey  string
+	RealityShortId    string
+	Multiplex         bool
 }
 
 func (s *VmessSupplementInfo) singBoxClient() map[string]any {
 	return map[string]any{
-		"uuid":     s.uuid,
-		"security": s.security,
-		"alter_id": s.alterId,
+		"uuid":     s.UUID,
+		"security": s.Security,
+		"alter_id": s.AlterId,
 		"tls": map[string]any{
-			"enabled":     s.tls,
-			"server_name": s.tlsServerName,
+			"enabled":     s.TLS,
+			"server_name": s.TLSServerName,
 			"utls": map[string]any{
-				"enabled":     s.utls,
-				"fingerprint": s.utlsFingerprint,
+				"enabled":     s.UTLS,
+				"fingerprint": s.UTLSFingerprint,
 			},
 			"reality": map[string]any{
-				"enabled":    s.reality,
-				"public_key": s.realityPublicKey,
-				"short_id":   s.realityShortId,
+				"enabled":    s.Reality,
+				"public_key": s.RealityPublicKey,
+				"short_id":   s.RealityShortId,
 			},
 		},
 		"multiplex": map[string]any{
-			"enabled":     s.multiplex,
+			"enabled":     s.Multiplex,
 			"max_streams": 3,
 		},
 	}
@@ -150,28 +150,28 @@ func (s *VmessSupplementInfo) singBoxServer() map[string]any {
 		"users": []map[string]any{
 			{
 				"name":    "sekai",
-				"uuid":    s.uuid,
-				"alterId": s.alterId,
+				"uuid":    s.UUID,
+				"alterId": s.AlterId,
 			},
 		},
 		"tls": map[string]any{
-			"enabled":     s.tls,
-			"server_name": s.tlsServerName,
+			"enabled":     s.TLS,
+			"server_name": s.TLSServerName,
 			"alpn": []string{
 				"h2", "http/1.1", "h3",
 			},
 			"reality": map[string]any{
-				"enabled": s.reality,
+				"enabled": s.Reality,
 				"handshake": map[string]any{
-					"server":      s.tlsServerName,
+					"server":      s.TLSServerName,
 					"server_port": 443,
 				},
-				"private_key": s.realityPrivateKey,
-				"short_id":    s.realityShortId,
+				"private_key": s.RealityPrivateKey,
+				"short_id":    s.RealityShortId,
 			},
 		},
 		"multiplex": map[string]any{
-			"enabled": s.multiplex,
+			"enabled": s.Multiplex,
 		},
 	}
 }
@@ -179,21 +179,21 @@ func (s *VmessSupplementInfo) singBoxServer() map[string]any {
 func (s *VmessSupplementInfo) clash() map[string]any {
 	return map[string]any{
 		"udp":                true,
-		"uuid":               s.uuid,
-		"alterId":            s.alterId,
-		"cipher":             s.security,
-		"tls":                s.tls,
-		"servername":         s.tlsServerName,
-		"client-fingerprint": s.utlsFingerprint,
+		"uuid":               s.UUID,
+		"alterId":            s.AlterId,
+		"cipher":             s.Security,
+		"tls":                s.TLS,
+		"servername":         s.TLSServerName,
+		"client-fingerprint": s.UTLSFingerprint,
 		"alpn": []string{
 			"h2", "http/1.1", "h3",
 		},
 		"reality-opts": map[string]any{
-			"public-key": s.realityPublicKey,
-			"short-id":   s.realityShortId,
+			"public-key": s.RealityPublicKey,
+			"short-id":   s.RealityShortId,
 		},
 		"smux": map[string]any{
-			"enabled": s.multiplex,
+			"enabled": s.Multiplex,
 		},
 	}
 }

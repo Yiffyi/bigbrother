@@ -118,7 +118,7 @@ type SubscriptionController struct {
 	servers []ProxyServerInfo
 }
 
-func NewSubscriptionController(generators []SubscriptionTemplate) (*SubscriptionController, error) {
+func NewSubscriptionController(generators []SubscriptionTemplate, servers []ProxyServerInfo) (*SubscriptionController, error) {
 	c := &SubscriptionController{}
 	for _, v := range generators {
 		if _, ok := c.genMap[v.ClientType()]; !ok {
@@ -127,6 +127,8 @@ func NewSubscriptionController(generators []SubscriptionTemplate) (*Subscription
 			return nil, errors.New("conflict ClientType found in subscription generators")
 		}
 	}
+
+	c.servers = servers
 
 	return c, nil
 }
