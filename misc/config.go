@@ -27,11 +27,20 @@ func setupViper(searchPaths []string) {
 	viper.SetDefault("log.console", true)
 	viper.SetDefault("log.pam_debug_dump", false)
 
-	viper.SetDefault("push.channel", "telegram")
-	viper.SetDefault("push.telegram.token", "")
-	viper.SetDefault("push.telegram.to_username", "")
-	viper.SetDefault("push.telegram.to_chatid", 0)
-	viper.SetDefault("push.telegram.timeout", time.Duration(5)*time.Second)
+	viper.SetDefault("pam.push_channel", "tg0")
+
+	viper.SetDefault("push.tg0.type", "telegram")
+	viper.SetDefault("push.tg0.token", "")
+	viper.SetDefault("push.tg0.to_username", "")
+	viper.SetDefault("push.tg0.to_chatid", 0)
+	viper.SetDefault("push.tg0.timeout", time.Duration(5)*time.Second)
+
+	viper.SetDefault("push.lark0.type", "feishu")
+	viper.SetDefault("push.lark0.app_id", "")
+	viper.SetDefault("push.lark0.app_secret", "")
+	viper.SetDefault("push.lark0.template_id", "AAAA:1.0.0")
+	viper.SetDefault("push.lark0.dst", "open_id:ou_7d8a6e6df7621556ce0d21922b676706ccs")
+	viper.SetDefault("push.lark0.timeout", time.Duration(5)*time.Second)
 
 	viper.SetDefault("honeypot.enabled", false)
 	viper.SetDefault("honeypot.server_version", "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3")

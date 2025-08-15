@@ -14,12 +14,11 @@ import (
 )
 
 type TelegramBot struct {
+	v   *viper.Viper
 	bot *tele.Bot
 }
 
-func NewTelegramBot() (*TelegramBot, error) {
-	v := viper.Sub("push.telegram")
-
+func NewTelegramBot(v *viper.Viper) (*TelegramBot, error) {
 	bot, err := tele.NewBot(tele.Settings{
 		Token: v.GetString("token"),
 		Client: &http.Client{
@@ -33,14 +32,13 @@ func NewTelegramBot() (*TelegramBot, error) {
 
 	return &TelegramBot{
 		bot: bot,
+		v:   v,
 	}, nil
 }
 
 func (b *TelegramBot) NotifyNewSSHLogin(ruser, rhost, user string, t time.Time) error {
-	v := viper.Sub("push.telegram")
-
-	chatid := v.GetInt64("to_chatid")
-	username := v.GetString("to_username")
+	chatid := b.v.GetInt64("to_chatid")
+	username := b.v.GetString("to_username")
 
 	var c *tele.Chat
 	var err error

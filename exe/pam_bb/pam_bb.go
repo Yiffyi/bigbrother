@@ -151,7 +151,7 @@ func init() {
 	_setupLogError = misc.SetupLog()
 
 	if _loadConfigError == nil {
-		_primaryPushChannel, _ = push.GetPushChannel(viper.GetString("push.channel"))
+		_primaryPushChannel, _ = push.GetPushChannel(viper.GetString("pam.push_channel"))
 	}
 }
 
