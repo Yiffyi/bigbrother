@@ -1,4 +1,4 @@
-package cmd
+package installer
 
 import (
 	"bufio"
@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/yiffyi/bigbrother/installer"
 	"github.com/yiffyi/bigbrother/misc"
 
 	"github.com/spf13/cobra"
@@ -163,7 +164,7 @@ func installPAM() {
 		}
 		fmt.Println("Installed PAM module", installPAMCustomSOFlag, "to", dstPath)
 	} else {
-		r, err := misc.NewReaderFromTarZstd(installZstdBytes, "pam_bb.so")
+		r, err := installer.NewReaderFromTarZstd(installZstdBytes, "pam_bb.so")
 		if err != nil {
 			fmt.Println("Could not decompress embedded resources", err)
 			return

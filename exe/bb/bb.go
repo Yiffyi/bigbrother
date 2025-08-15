@@ -4,7 +4,7 @@ import (
 	_ "embed"
 
 	"github.com/spf13/cobra"
-	"github.com/yiffyi/bigbrother/cmd"
+	"github.com/yiffyi/bigbrother/installer"
 	"github.com/yiffyi/bigbrother/misc"
 )
 
@@ -23,7 +23,7 @@ func main() {
 		Short: "bb - Big Brother is WATCHING you(r server)",
 	}
 
-	rootCmd.AddCommand(cmd.SetupInstallCmd(installZstdBytes))
+	rootCmd.AddCommand(installer.SetupInstallCmd(installZstdBytes))
 
 	rootCmd.Execute()
 }
