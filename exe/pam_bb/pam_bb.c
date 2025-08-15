@@ -22,7 +22,7 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags,
 int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
                      int argc, const char **argv)
 {
-    syslog(LOG_DEBUG, "pam_sm_open_session");
+    syslog(LOG_DEBUG, "pam_sm_acct_mgmt");
     return PAM_IGNORE;
 }
 
