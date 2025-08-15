@@ -8,17 +8,17 @@ import (
 	"github.com/yiffyi/bigbrother/ppp/model"
 )
 
-type ProxyServerSupplementInfo interface {
-	SpecializeClientConfig(clientType model.ProgramType, genericInfo map[string]any) (map[string]any, error)
+type ProxySupplementInfo interface {
+	SpecializeUserConfig(clientType model.ProgramType, genericInfo map[string]any) (map[string]any, error)
 	SpecializeServerConfig(serverType model.ProgramType, genericInfo map[string]any) (map[string]any, error)
 }
 
-type ProxyServerInfo struct {
+type ProxyEndpointInfo struct {
 	Protocol       string
 	Tag            string
 	Server         string
 	ServerPort     int
-	SupplementInfo ProxyServerSupplementInfo
+	SupplementInfo ProxySupplementInfo
 }
 
 type Hysteria2SupplementInfo struct {
@@ -56,10 +56,10 @@ func (s *Hysteria2SupplementInfo) singBoxServer() map[string]any {
 		"tls": map[string]any{
 			"enabled":     s.TLS,
 			"server_name": s.TLSServerName,
-			"acme": map[string]any{
-				"domain": s.TLSServerName,
-				"email":  s.ACMEEmail,
-			},
+			// "acme": map[string]any{
+			// 	"domain": s.TLSServerName,
+			// 	"email":  s.ACMEEmail,
+			// },
 			"alpn": []string{
 				"h3",
 			},
@@ -75,7 +75,7 @@ func (s *Hysteria2SupplementInfo) clash() map[string]any {
 	}
 }
 
-func (s *Hysteria2SupplementInfo) SpecializeClientConfig(clientType model.ProgramType, genericInfo map[string]any) (map[string]any, error) {
+func (s *Hysteria2SupplementInfo) SpecializeUserConfig(clientType model.ProgramType, genericInfo map[string]any) (map[string]any, error) {
 	var supp map[string]any
 	switch clientType {
 	case "sing-box":
@@ -198,7 +198,7 @@ func (s *VmessSupplementInfo) clash() map[string]any {
 	}
 }
 
-func (s *VmessSupplementInfo) SpecializeClientConfig(clientType model.ProgramType, genericInfo map[string]any) (map[string]any, error) {
+func (s *VmessSupplementInfo) SpecializeUserConfig(clientType model.ProgramType, genericInfo map[string]any) (map[string]any, error) {
 	var supp map[string]any
 	switch clientType {
 	case model.PROGRAM_TYPE_SINGBOX:

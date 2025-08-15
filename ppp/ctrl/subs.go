@@ -12,11 +12,11 @@ import (
 type SubscriptionTemplate interface {
 	ClientType() model.ProgramType
 	ContentType() string
-	RenderTemplate(servers []ProxyServerInfo) ([]byte, error)
+	RenderTemplate(servers []ProxyEndpointInfo) ([]byte, error)
 }
 
 type SingBoxSubscriptionTemplate struct {
-	templatePath string
+	TemplatePath string
 }
 
 func (g *SingBoxSubscriptionTemplate) ClientType() model.ProgramType {
@@ -27,8 +27,8 @@ func (g *SingBoxSubscriptionTemplate) ContentType() string {
 	return "application/json"
 }
 
-func (g *SingBoxSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) ([]byte, error) {
-	b, err := os.ReadFile(g.templatePath)
+func (g *SingBoxSubscriptionTemplate) RenderTemplate(servers []ProxyEndpointInfo) ([]byte, error) {
+	b, err := os.ReadFile(g.TemplatePath)
 	if err != nil {
 		return nil, err
 	}
@@ -48,12 +48,13 @@ func (g *SingBoxSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) 
 				"server_port": s.ServerPort,
 			}
 
-			info, err := s.SupplementInfo.SpecializeClientConfig(model.PROGRAM_TYPE_SINGBOX, info)
+			info, err := s.SupplementInfo.SpecializeUserConfig(model.PROGRAM_TYPE_SINGBOX, info)
 			if err != nil {
 				return nil, err
 			}
 			outbounds = append(outbounds, info)
 		}
+		p["outbounds"] = outbounds
 	}
 
 	b, err = json.MarshalIndent(p, "", "    ")
@@ -65,7 +66,7 @@ func (g *SingBoxSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) 
 }
 
 type ClashSubscriptionTemplate struct {
-	templatePath string
+	TemplatePath string
 }
 
 func (g *ClashSubscriptionTemplate) ClientType() model.ProgramType {
@@ -76,8 +77,8 @@ func (g *ClashSubscriptionTemplate) ContentType() string {
 	return "application/yaml"
 }
 
-func (g *ClashSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) ([]byte, error) {
-	b, err := os.ReadFile(g.templatePath)
+func (g *ClashSubscriptionTemplate) RenderTemplate(servers []ProxyEndpointInfo) ([]byte, error) {
+	b, err := os.ReadFile(g.TemplatePath)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func (g *ClashSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) ([
 				"port":   s.ServerPort,
 			}
 
-			info, err := s.SupplementInfo.SpecializeClientConfig(model.PROGRAM_TYPE_SINGBOX, info)
+			info, err := s.SupplementInfo.SpecializeUserConfig(model.PROGRAM_TYPE_SINGBOX, info)
 			if err != nil {
 				return nil, err
 			}
@@ -115,11 +116,14 @@ func (g *ClashSubscriptionTemplate) RenderTemplate(servers []ProxyServerInfo) ([
 
 type SubscriptionController struct {
 	genMap  map[model.ProgramType]SubscriptionTemplate
-	servers []ProxyServerInfo
+	servers []ProxyEndpointInfo
 }
 
-func NewSubscriptionController(generators []SubscriptionTemplate, servers []ProxyServerInfo) (*SubscriptionController, error) {
-	c := &SubscriptionController{}
+func NewSubscriptionController(generators []SubscriptionTemplate, servers []ProxyEndpointInfo) (*SubscriptionController, error) {
+	c := &SubscriptionController{
+		genMap:  map[model.ProgramType]SubscriptionTemplate{},
+		servers: nil,
+	}
 	for _, v := range generators {
 		if _, ok := c.genMap[v.ClientType()]; !ok {
 			c.genMap[v.ClientType()] = v

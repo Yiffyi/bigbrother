@@ -31,10 +31,25 @@ func ctrlMain() error {
 
 	proxyCtrl, err := NewSubscriptionController([]SubscriptionTemplate{
 		&ClashSubscriptionTemplate{
-			templatePath: viper.GetString("ppp.ctrl.clash_sub_template"),
+			TemplatePath: viper.GetString("ppp.ctrl.clash_sub_template"),
 		},
 		&SingBoxSubscriptionTemplate{
-			templatePath: viper.GetString("ppp.ctrl.singbox_base_json"),
+			TemplatePath: viper.GetString("ppp.ctrl.singbox_base_json"),
+		},
+	}, []ProxyEndpointInfo{
+		{
+			Protocol:   "hysteria2",
+			Tag:        "hy2,local",
+			Server:     "127.0.0.1",
+			ServerPort: 8443,
+			SupplementInfo: &Hysteria2SupplementInfo{
+				Password:      "lo",
+				Up:            0,
+				Down:          0,
+				TLS:           false,
+				TLSServerName: "locaclhost",
+				// ACMEEmail: "",
+			},
 		},
 	})
 
