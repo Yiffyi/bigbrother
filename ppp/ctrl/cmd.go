@@ -29,7 +29,7 @@ func ctrlMain() error {
 		serverConfig.AddHostKey(hostKey)
 	}
 
-	proxyCtrl, err := NewSubscriptionController([]SubscriptionTemplate{
+	proxyCtrl, err := NewSubscriptionController([]ConfigTemplate{
 		&ClashSubscriptionTemplate{
 			TemplatePath: viper.GetString("ppp.ctrl.clash_sub_template"),
 		},

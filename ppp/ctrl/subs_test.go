@@ -129,10 +129,10 @@ var _ = Describe("Subs", func() {
 		gen := ctrl.SingBoxSubscriptionTemplate{
 			TemplatePath: singBoxBasePath,
 		}
-		Expect(gen.ClientType()).To(Equal(model.PROGRAM_TYPE_SINGBOX))
+		Expect(gen.ProgramType()).To(Equal(model.PROGRAM_TYPE_SINGBOX))
 		Expect(gen.ContentType()).To(Equal("application/json"))
 
-		res, err := gen.RenderTemplate([]ctrl.ProxyEndpointInfo{exampleEndpointConfig})
+		res, err := gen.RenderUserConfigTemplate([]ctrl.ProxyEndpointInfo{exampleEndpointConfig})
 		Expect(err).To(BeNil())
 
 		GinkgoWriter.Print("RenderTemplate output:", string(res))
@@ -146,7 +146,7 @@ var _ = Describe("Subs", func() {
 
 	It("should serve subscriptions", func() {
 		c, err := ctrl.NewSubscriptionController(
-			[]ctrl.SubscriptionTemplate{
+			[]ctrl.ConfigTemplate{
 				&ctrl.SingBoxSubscriptionTemplate{TemplatePath: singBoxBasePath},
 				&ctrl.ClashSubscriptionTemplate{TemplatePath: clashBasePath},
 			},
