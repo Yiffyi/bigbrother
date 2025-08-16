@@ -9,6 +9,7 @@ import (
 )
 
 type ProxySupplementInfo interface {
+	FillInHostname(hostname string)
 	SpecializeUserConfig(clientType model.ProgramType, genericInfo map[string]any) (map[string]any, error)
 	SpecializeServerConfig(serverType model.ProgramType, genericInfo map[string]any) (map[string]any, error)
 }
@@ -19,6 +20,63 @@ type ProxyEndpointInfo struct {
 	Server         string
 	ServerPort     int
 	SupplementInfo ProxySupplementInfo
+}
+
+func (s *ProxyEndpointInfo) FillInHostname(hostname string) {
+	s.Server = hostname
+	s.SupplementInfo.FillInHostname(hostname)
+}
+
+func (s *ProxyEndpointInfo) GenerateUserConfig(clientType model.ProgramType) (map[string]any, error) {
+	var info map[string]any
+	switch clientType {
+	case model.PROGRAM_TYPE_CLASH:
+		info = map[string]any{
+			"name":   s.Tag,
+			"type":   s.Protocol,
+			"server": s.Server,
+			"port":   s.ServerPort,
+		}
+	case model.PROGRAM_TYPE_SINGBOX:
+		info = map[string]any{
+			"type":        s.Protocol,
+			"tag":         s.Tag,
+			"server":      s.Server,
+			"server_port": s.ServerPort,
+		}
+	default:
+		return nil, errors.New("unsupported clientType")
+	}
+
+	info, err := s.SupplementInfo.SpecializeUserConfig(clientType, info)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, err
+}
+
+func (s *ProxyEndpointInfo) GenerateServerConfig(serverType model.ProgramType) (map[string]any, error) {
+	var info map[string]any
+	switch serverType {
+	case model.PROGRAM_TYPE_SINGBOX:
+		info = map[string]any{
+			"type":        s.Protocol,
+			"tag":         s.Tag,
+			"listen":      "::", // deal with it later
+			"listen_port": s.ServerPort,
+		}
+	default:
+		return nil, errors.New("unsupported serverType")
+	}
+
+	info, err := s.SupplementInfo.SpecializeServerConfig(serverType, info)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, err
+
 }
 
 type Hysteria2SupplementInfo struct {
@@ -71,6 +129,7 @@ func (s *Hysteria2SupplementInfo) singBoxServer() map[string]any {
 		},
 	}
 }
+
 func (s *Hysteria2SupplementInfo) clash() map[string]any {
 	return map[string]any{
 		"tls":      s.TLS,
@@ -79,6 +138,10 @@ func (s *Hysteria2SupplementInfo) clash() map[string]any {
 		"up":       fmt.Sprintf("%d Mbps", s.Up),
 		"down":     fmt.Sprintf("%d Mbps", s.Down),
 	}
+}
+
+func (s *Hysteria2SupplementInfo) FillInHostname(hostname string) {
+	s.TLSServerName = hostname
 }
 
 func (s *Hysteria2SupplementInfo) SpecializeUserConfig(clientType model.ProgramType, genericInfo map[string]any) (map[string]any, error) {
@@ -206,6 +269,10 @@ func (s *VmessSupplementInfo) clash() map[string]any {
 			"enabled": s.Multiplex,
 		},
 	}
+}
+
+func (s *VmessSupplementInfo) FillInHostname(hostname string) {
+	s.TLSServerName = hostname
 }
 
 func (s *VmessSupplementInfo) SpecializeUserConfig(clientType model.ProgramType, genericInfo map[string]any) (map[string]any, error) {
