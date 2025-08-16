@@ -12,8 +12,8 @@ import (
 type ConfigTemplate interface {
 	ProgramType() model.ProgramType
 	ContentType() string
-	RenderUserConfigTemplate(servers []ProxyEndpointInfo) ([]byte, error)
-	// RenderServerConfigTemplate(servers []ProxyEndpointInfo) ([]byte, error)
+	RenderUserConfigTemplate(outbounds []ProxyEndpointInfo) ([]byte, error)
+	RenderServerConfigTemplate(inbounds []ProxyEndpointInfo) ([]byte, error)
 }
 
 type SingBoxSubscriptionTemplate struct {
@@ -61,6 +61,10 @@ func (g *SingBoxSubscriptionTemplate) RenderUserConfigTemplate(servers []ProxyEn
 	return b, nil
 }
 
+func (g *SingBoxSubscriptionTemplate) RenderServerConfigTemplate(servers []ProxyEndpointInfo) ([]byte, error) {
+	return nil, nil
+}
+
 type ClashSubscriptionTemplate struct {
 	TemplatePath string
 }
@@ -104,4 +108,8 @@ func (g *ClashSubscriptionTemplate) RenderUserConfigTemplate(servers []ProxyEndp
 	}
 
 	return b, nil
+}
+
+func (g *ClashSubscriptionTemplate) RenderServerConfigTemplate(servers []ProxyEndpointInfo) ([]byte, error) {
+	return nil, nil
 }
