@@ -43,7 +43,7 @@ func ctrlMain() error {
 			Server:     "127.0.0.1",
 			ServerPort: 8443,
 			SupplementInfo: &Hysteria2SupplementInfo{
-				Password:      "lo",
+				Passwords:     []string{"lo,pw0", "lo,pw1"},
 				Up:            0,
 				Down:          0,
 				TLS:           false,

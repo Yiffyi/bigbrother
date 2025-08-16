@@ -55,6 +55,8 @@ func (g *SingBoxSubscriptionTemplate) RenderTemplate(servers []ProxyEndpointInfo
 			outbounds = append(outbounds, info)
 		}
 		p["outbounds"] = outbounds
+	} else {
+		return nil, errors.New("could not found outbounds section in sing-box base config")
 	}
 
 	b, err = json.MarshalIndent(p, "", "    ")
@@ -98,12 +100,15 @@ func (g *ClashSubscriptionTemplate) RenderTemplate(servers []ProxyEndpointInfo) 
 				"port":   s.ServerPort,
 			}
 
-			info, err := s.SupplementInfo.SpecializeUserConfig(model.PROGRAM_TYPE_SINGBOX, info)
+			info, err := s.SupplementInfo.SpecializeUserConfig(model.PROGRAM_TYPE_CLASH, info)
 			if err != nil {
 				return nil, err
 			}
 			outbounds = append(outbounds, info)
 		}
+		p["proxies"] = outbounds
+	} else {
+		return nil, errors.New("could not found proxies section in clash base config")
 	}
 
 	b, err = yaml.Marshal(p)

@@ -22,7 +22,7 @@ type ProxyEndpointInfo struct {
 }
 
 type Hysteria2SupplementInfo struct {
-	Password      string
+	Passwords     []string
 	Up            int
 	Down          int
 	TLS           bool
@@ -32,7 +32,7 @@ type Hysteria2SupplementInfo struct {
 
 func (s *Hysteria2SupplementInfo) singBoxClient() map[string]any {
 	return map[string]any{
-		"password":  s.Password,
+		"password":  s.Passwords[0], // client always takes the first
 		"up_mbps":   s.Up,
 		"down_mbps": s.Down,
 		"tls": map[string]any{
@@ -43,13 +43,18 @@ func (s *Hysteria2SupplementInfo) singBoxClient() map[string]any {
 }
 
 func (s *Hysteria2SupplementInfo) singBoxServer() map[string]any {
-	return map[string]any{
-		"users": []map[string]any{
-			{
-				"name":     "sekai",
-				"password": s.Password,
+	users := []map[string]string{}
+	for k, v := range s.Passwords {
+		users = append(users,
+			map[string]string{
+				"name":     fmt.Sprintf("hy2:%d", k),
+				"password": v,
 			},
-		},
+		)
+	}
+
+	return map[string]any{
+		"users":                   users,
 		"up_mbps":                 s.Up,
 		"down_mbps":               s.Down,
 		"ignore_client_bandwidth": false,
@@ -68,10 +73,11 @@ func (s *Hysteria2SupplementInfo) singBoxServer() map[string]any {
 }
 func (s *Hysteria2SupplementInfo) clash() map[string]any {
 	return map[string]any{
-		"tls":  s.TLS,
-		"sni":  s.TLSServerName,
-		"up":   fmt.Sprintf("%d Mbps", s.Up),
-		"down": fmt.Sprintf("%d Mbps", s.Down),
+		"tls":      s.TLS,
+		"sni":      s.TLSServerName,
+		"password": s.Passwords[0],
+		"up":       fmt.Sprintf("%d Mbps", s.Up),
+		"down":     fmt.Sprintf("%d Mbps", s.Down),
 	}
 }
 
@@ -106,7 +112,7 @@ func (s *Hysteria2SupplementInfo) SpecializeServerConfig(serverType model.Progra
 }
 
 type VmessSupplementInfo struct {
-	UUID              string
+	UUIDs             []string
 	Security          string
 	AlterId           int
 	TLS               bool
@@ -122,7 +128,7 @@ type VmessSupplementInfo struct {
 
 func (s *VmessSupplementInfo) singBoxClient() map[string]any {
 	return map[string]any{
-		"uuid":     s.UUID,
+		"uuid":     s.UUIDs[0],
 		"security": s.Security,
 		"alter_id": s.AlterId,
 		"tls": map[string]any{
@@ -146,14 +152,18 @@ func (s *VmessSupplementInfo) singBoxClient() map[string]any {
 }
 
 func (s *VmessSupplementInfo) singBoxServer() map[string]any {
-	return map[string]any{
-		"users": []map[string]any{
-			{
-				"name":    "sekai",
-				"uuid":    s.UUID,
+	users := []map[string]any{}
+	for k, v := range s.UUIDs {
+		users = append(users,
+			map[string]any{
+				"name":    fmt.Sprintf("vmess:%d", k),
+				"uuid":    v,
 				"alterId": s.AlterId,
 			},
-		},
+		)
+	}
+	return map[string]any{
+		"users": users,
 		"tls": map[string]any{
 			"enabled":     s.TLS,
 			"server_name": s.TLSServerName,
@@ -179,7 +189,7 @@ func (s *VmessSupplementInfo) singBoxServer() map[string]any {
 func (s *VmessSupplementInfo) clash() map[string]any {
 	return map[string]any{
 		"udp":                true,
-		"uuid":               s.UUID,
+		"uuid":               s.UUIDs[0],
 		"alterId":            s.AlterId,
 		"cipher":             s.Security,
 		"tls":                s.TLS,

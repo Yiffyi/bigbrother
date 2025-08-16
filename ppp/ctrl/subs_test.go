@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/yiffyi/bigbrother/ppp/ctrl"
 	"github.com/yiffyi/bigbrother/ppp/model"
+	"gopkg.in/yaml.v3"
 )
 
 var singBoxUserBase = `{
@@ -48,6 +49,48 @@ var singBoxUserBase = `{
     }
 }`
 
+var clashUserBase = `
+proxies: []
+
+proxy-groups:
+  - {
+      name: "PROXY",
+      type: select,
+      proxies:
+        [
+          "Hysteria - Seoul, AWS",
+          "Hysteria - Tokyo, BWH",
+          "Hysteria - Tokyo, AWS",
+          "VMESS - Tokyo, BWH",
+          "VMESS - Seoul, AWS",
+          "VMESS - LAX, BWH",
+          "Hysteria - LAX, BWH",
+        ],
+    }
+  # - { name: 'SPECIAL', type: select, proxies: ["VMESS - Tokyo, BWH", "VMESS - LAX, BWH", "Hysteria - LAX, BWH"] }
+
+dns:
+  enable: true
+  proxy-server-nameserver:
+    - 223.5.5.5
+    - 223.6.6.6
+    # - system
+  direct-nameserver:
+    - 223.5.5.5
+    - 223.6.6.6
+    # - system
+  nameserver:
+    - https://1.1.1.1/dns-query#PROXY
+    - https://1.0.0.1/dns-query#PROXY
+
+rules:
+  - GEOIP,LAN,DIRECT
+  - GEOIP,CN,DIRECT
+  - IP-CIDR,100.64.0.0/10,DIRECT
+  - IP-CIDR,198.19.0.0/16,DIRECT
+  - MATCH,PROXY
+`
+
 var _ = Describe("Subs", func() {
 	var tempDir string
 	var singBoxBasePath string
@@ -59,7 +102,7 @@ var _ = Describe("Subs", func() {
 		Server:     "127.0.0.1",
 		ServerPort: 8443,
 		SupplementInfo: &ctrl.Hysteria2SupplementInfo{
-			Password:      "lo",
+			Passwords:     []string{"lo,pw0", "lo,pw1"},
 			Up:            0,
 			Down:          0,
 			TLS:           false,
@@ -75,6 +118,10 @@ var _ = Describe("Subs", func() {
 
 		singBoxBasePath = path.Join(tempDir, "sing-box.base.json")
 		err = os.WriteFile(singBoxBasePath, []byte(singBoxUserBase), os.ModePerm)
+		Expect(err).To(BeNil())
+
+		clashBasePath = path.Join(tempDir, "clash.base.yaml")
+		err = os.WriteFile(clashBasePath, []byte(clashUserBase), os.ModePerm)
 		Expect(err).To(BeNil())
 	})
 
@@ -116,9 +163,11 @@ var _ = Describe("Subs", func() {
 
 		b, err = c.GetSubscription("clash")
 		Expect(err).To(BeNil())
+		GinkgoWriter.Print("clash subscription:", string(b))
 
-		err = json.Unmarshal(b, &j)
+		err = yaml.Unmarshal(b, &j)
 		Expect(err).To(BeNil())
+
 	})
 
 	AfterEach(func() {
