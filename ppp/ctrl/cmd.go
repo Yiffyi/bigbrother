@@ -36,21 +36,6 @@ func ctrlMain() error {
 		&SingBoxSubscriptionTemplate{
 			TemplatePath: viper.GetString("ppp.ctrl.singbox_base_json"),
 		},
-	}, []ProxyEndpointInfo{
-		{
-			Protocol:   "hysteria2",
-			Tag:        "hy2,local",
-			Server:     "127.0.0.1",
-			ServerPort: 8443,
-			SupplementInfo: &Hysteria2SupplementInfo{
-				Passwords:     []string{"lo,pw0", "lo,pw1"},
-				Up:            0,
-				Down:          0,
-				TLS:           false,
-				TLSServerName: "locaclhost",
-				// ACMEEmail: "",
-			},
-		},
 	})
 
 	if err != nil {

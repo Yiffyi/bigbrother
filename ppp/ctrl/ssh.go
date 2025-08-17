@@ -219,7 +219,22 @@ func serveGlobalRequests(sid uint64, _ *ssh.ServerConn, in <-chan *ssh.Request) 
 }
 
 func serveChannel(sid uint64, _ *ssh.ServerConn, channel ssh.Channel, proxyController *SubscriptionController) {
-	cfg, err := proxyController.GetSubscription("sing-box")
+	cfg, err := proxyController.GetSubscription("sing-box", []ProxyEndpointInfo{
+		{
+			Protocol:   "hysteria2",
+			Tag:        "hy2,local",
+			Server:     "127.0.0.1",
+			ServerPort: 8443,
+			SupplementInfo: &Hysteria2SupplementInfo{
+				Passwords:     []string{"lo,pw0", "lo,pw1"},
+				Up:            0,
+				Down:          0,
+				TLS:           false,
+				TLSServerName: "locaclhost",
+				// ACMEEmail: "",
+			},
+		},
+	})
 	if err == nil {
 		req := model.UpdateServerConfigRequest{
 			ServerType: "sing-box",

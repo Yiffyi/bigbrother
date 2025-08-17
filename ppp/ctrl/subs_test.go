@@ -150,18 +150,17 @@ var _ = Describe("Subs", func() {
 				&ctrl.SingBoxSubscriptionTemplate{TemplatePath: singBoxBasePath},
 				&ctrl.ClashSubscriptionTemplate{TemplatePath: clashBasePath},
 			},
-			[]ctrl.ProxyEndpointInfo{exampleEndpointConfig},
 		)
 		Expect(err).To(BeNil())
 
-		b, err := c.GetSubscription("sing-box")
+		b, err := c.GetSubscription("sing-box", []ctrl.ProxyEndpointInfo{exampleEndpointConfig})
 		Expect(err).To(BeNil())
 
 		var j map[string]any
 		err = json.Unmarshal(b, &j)
 		Expect(err).To(BeNil())
 
-		b, err = c.GetSubscription("clash")
+		b, err = c.GetSubscription("clash", []ctrl.ProxyEndpointInfo{exampleEndpointConfig})
 		Expect(err).To(BeNil())
 		GinkgoWriter.Print("clash subscription:", string(b))
 
