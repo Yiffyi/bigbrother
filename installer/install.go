@@ -39,8 +39,12 @@ var installCmd = &cobra.Command{
 	},
 }
 
-func SetupInstallCmd(installZstd []byte) *cobra.Command {
-	installCmd.Flags().StringVar(&installPAMToServiceFlag, "pamService", "", "Service to add pam_bb")
+func SetupInstallCmd(v *viper.Viper, installZstd []byte) *cobra.Command {
+	v.SetDefault("installer.honeypot_path", "/usr/local/bin/honeypot")
+	v.SetDefault("installer.honeypot_service_unit", "/etc/systemd/system/bb-honeypot.service")
+	v.SetDefault("installer.pam_bb_path", "/usr/local/lib/pam_bb.so")
+
+	installCmd.Flags().StringVar(&installPAMToServiceFlag, "pamService", "sshd", "Service to add pam_bb")
 	installCmd.Flags().StringVar(&installPAMCustomSOFlag, "pamSo", "", "Use a differeent pam_bb.so file instead of the embedded one")
 	installCmd.Flags().BoolVar(&installSaveConfig, "saveConfig", false, "Save current config to /etc/bb/config.toml")
 

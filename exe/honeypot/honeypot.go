@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	cmd := honeypot.SetupHoneyDCmd(viper.Sub("honeypot"))
+	cmd := honeypot.SetupHoneyDCmd(viper.GetViper())
 
 	if err := misc.LoadConfig([]string{"."}); err != nil {
 		panic(err)

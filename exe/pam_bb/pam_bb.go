@@ -147,6 +147,8 @@ func bb_cgo_open_session(pamh *C.pam_handle_t) (status C.int) {
 }
 
 func init() {
+	viper.SetDefault("pam.push_channel", "tg0")
+
 	_loadConfigError = misc.LoadConfig(nil)
 	_setupLogError = misc.SetupLog()
 

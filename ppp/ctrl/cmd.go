@@ -14,7 +14,17 @@ var ctrlCmd = &cobra.Command{
 	},
 }
 
-func SetupCtrlCmd() *cobra.Command {
+func SetupCtrlCmd(v *viper.Viper) *cobra.Command {
+	v.SetDefault("ppp.ctrl.base_url", "http://127.0.0.1:8080")
+	v.SetDefault("ppp.ctrl.web_root", "public")
+	v.SetDefault("ppp.ctrl.http_listen_addr", ":8080")
+	v.SetDefault("ppp.ctrl.ssh_listen_addr", ":8022")
+	v.SetDefault("ppp.ctrl.ssh_authorized_keys", "authorized_keys")
+	v.SetDefault("ppp.ctrl.dsn", "data.db")
+	v.SetDefault("ppp.ctrl.clash_sub_template", "clash_sub_template.yaml")
+	v.SetDefault("ppp.ctrl.singbox_base_json", "sing-box.base.json")
+	v.SetDefault("ppp.ctrl.key_rotate_interval", "144h")
+	v.SetDefault("ppp.ctrl.keep_last_keys", 1)
 	return ctrlCmd
 }
 

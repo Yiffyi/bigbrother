@@ -25,11 +25,11 @@ var honeydCmd = &cobra.Command{
 }
 
 func SetupHoneyDCmd(v *viper.Viper) *cobra.Command {
-	v.SetDefault("enabled", false)
-	v.SetDefault("server_version", "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3")
-	v.SetDefault("server_host_keys", []string{"id_rsa"})
-	v.SetDefault("listen_addrs", []string{"0.0.0.0:2022"})
-	v.SetDefault("allow_any_creds", false)
+	v.SetDefault("honeypot.enabled", false)
+	v.SetDefault("honeypot.server_version", "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3")
+	v.SetDefault("honeypot.server_host_keys", []string{"id_rsa"})
+	v.SetDefault("honeypot.listen_addrs", []string{"0.0.0.0:2022"})
+	v.SetDefault("honeypot.allow_any_creds", false)
 
 	vHoneypot = v
 	return honeydCmd
