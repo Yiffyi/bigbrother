@@ -15,6 +15,7 @@ type ProxySupplementInfo interface {
 }
 
 type ProxyEndpointInfo struct {
+	Group          string
 	Protocol       string
 	Tag            string
 	Server         string

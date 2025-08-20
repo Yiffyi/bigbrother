@@ -97,6 +97,7 @@ var _ = Describe("Subs", func() {
 	var clashBasePath string
 
 	var exampleEndpointConfig = ctrl.ProxyEndpointInfo{
+		Group:      "group01",
 		Protocol:   "hysteria2",
 		Tag:        "hy2,local",
 		Server:     "127.0.0.1",
