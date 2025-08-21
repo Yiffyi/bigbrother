@@ -16,7 +16,6 @@ import (
 )
 
 var db *gorm.DB
-var vHoneypot *viper.Viper
 var honeydCmd = &cobra.Command{
 	Use: "honeyd",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -24,19 +23,18 @@ var honeydCmd = &cobra.Command{
 	},
 }
 
-func SetupHoneyDCmd(v *viper.Viper) *cobra.Command {
-	v.SetDefault("honeypot.enabled", false)
-	v.SetDefault("honeypot.server_version", "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3")
-	v.SetDefault("honeypot.server_host_keys", []string{"id_rsa"})
-	v.SetDefault("honeypot.listen_addrs", []string{"0.0.0.0:2022"})
-	v.SetDefault("honeypot.allow_any_creds", false)
+func SetupHoneyDCmd() *cobra.Command {
+	viper.SetDefault("honeypot.enabled", false)
+	viper.SetDefault("honeypot.server_version", "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3")
+	viper.SetDefault("honeypot.server_host_keys", []string{"id_rsa"})
+	viper.SetDefault("honeypot.listen_addrs", []string{"0.0.0.0:2022"})
+	viper.SetDefault("honeypot.allow_any_creds", false)
 
-	vHoneypot = v
 	return honeydCmd
 }
 
 func honeydMain() {
-	v := vHoneypot
+	v := viper.Sub("honeypot")
 
 	var err error
 	db, err = OpenDatabase(v)

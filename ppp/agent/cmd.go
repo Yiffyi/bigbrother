@@ -21,15 +21,15 @@ var agentCmd = &cobra.Command{
 	},
 }
 
-func SetupAgentCmd(v *viper.Viper) *cobra.Command {
-	v.SetDefault("ppp.agent.ctrl_addr", "127.0.0.1:8022")
-	v.SetDefault("ppp.agent.ssh_known_hosts", "known_hosts")
-	v.SetDefault("ppp.agent.hostname", "localhost")
-	v.SetDefault("ppp.agent.report_interval", "1h")
-	v.SetDefault("ppp.agent.proxy_type", "sing-box")
-	v.SetDefault("ppp.agent.proxy_program", "sing-box")
-	v.SetDefault("ppp.agent.proxy_args", []string{"-c", "stdin", "run"})
-	v.SetDefault("ppp.agent.proxy_share_console", false)
+func SetupAgentCmd() *cobra.Command {
+	viper.SetDefault("ppp.agent.ctrl_addr", "127.0.0.1:8022")
+	viper.SetDefault("ppp.agent.ssh_known_hosts", "known_hosts")
+	viper.SetDefault("ppp.agent.hostname", "localhost")
+	viper.SetDefault("ppp.agent.report_interval", "1h")
+	viper.SetDefault("ppp.agent.proxy_type", "sing-box")
+	viper.SetDefault("ppp.agent.proxy_program", "sing-box")
+	viper.SetDefault("ppp.agent.proxy_args", []string{"-c", "stdin", "run"})
+	viper.SetDefault("ppp.agent.proxy_share_console", false)
 	return agentCmd
 }
 
