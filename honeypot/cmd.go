@@ -16,6 +16,7 @@ import (
 )
 
 var db *gorm.DB
+var ct *CounterStrikeController
 var honeydCmd = &cobra.Command{
 	Use: "honeyd",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -25,6 +26,7 @@ var honeydCmd = &cobra.Command{
 
 func SetupHoneyDCmd() *cobra.Command {
 	viper.SetDefault("honeypot.enabled", false)
+	viper.SetDefault("honeypot.db", "honeypot.db")
 	viper.SetDefault("honeypot.server_version", "SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3")
 	viper.SetDefault("honeypot.server_host_keys", []string{"id_rsa"})
 	viper.SetDefault("honeypot.listen_addrs", []string{"0.0.0.0:2022"})
@@ -41,6 +43,8 @@ func honeydMain() {
 	if err != nil {
 		panic(err)
 	}
+
+	ct = NewCounterStrikeController(db)
 
 	config := NewSSHServerConfig(v)
 	hostKeys := LoadHostKey(v)
@@ -223,6 +227,7 @@ func NewSSHServerConfig(v *viper.Viper) *ssh.ServerConfig {
 				Msg("password auth attempt")
 
 			RecordAuthAttempt(db, c.User(), string(pass), c.RemoteAddr())
+			ct.Strike(c.RemoteAddr(), c.User(), string(pass))
 
 			if v.GetBool("allow_any_creds") {
 				return nil, nil
