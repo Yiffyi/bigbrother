@@ -6,7 +6,7 @@ jobs:
   build:
     # runs on a older version of Ubuntu, so that we get
     # a GLIBC version that has better compatibility
-    runs-on: ubuntu-20.04 
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
