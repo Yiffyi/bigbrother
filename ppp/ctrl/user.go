@@ -42,6 +42,37 @@ func (c *UserController) GetUserByID(id string) (*model.User, error) {
 	return &user, err
 }
 
+func (c *UserController) CreateInvoice(userId uint, amount int, days int) (*model.Invoice, error) {
+	ctx := context.Background()
+
+	invoice := model.Invoice{
+		Amount: amount, Days: days, State: model.INVOICE_STATE_INVALID,
+		Claimed: false,
+		UserID:  userId,
+	}
+
+	err := gorm.G[model.Invoice](c.db).Create(ctx, &invoice) // pass pointer of data to Create
+
+	return &invoice, err
+}
+
+func (c *UserController) UpdateInvoiceState(invoiceId uint, newState model.InvoiceState) error {
+	ctx := context.Background()
+
+	cnt, err := gorm.G[model.Invoice](c.db).
+		Where("id = ?", invoiceId). // maybe check if it is claimed
+		Update(ctx, "state", newState)
+	if err != nil {
+		return err
+	}
+
+	if cnt != 1 {
+		return errors.New("could not update target invoice")
+	}
+
+	return nil
+}
+
 func (c *UserController) ExtendSubscription(invoiceId uint) (user *model.User, err error) {
 	ctx := context.Background()
 
@@ -60,7 +91,7 @@ func (c *UserController) ExtendSubscription(invoiceId uint) (user *model.User, e
 		}
 
 		if claimedCnt != 1 {
-			return errors.New("could claim this invoice to extend subscription")
+			return errors.New("could claim target invoice to extend subscription")
 		}
 
 		invoice, err := gorm.G[model.Invoice](tx).
